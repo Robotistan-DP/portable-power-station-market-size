@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Marxlow satış öngörü sistemi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF1EF; --surface:#FFFFFF; --ink:#16252B; --muted:#5B6B70; --line:#CBD5D2;
+  --charge:#1F8A5B; --charge-soft:#D3EADF; --amber:#C98A0B; --amber-soft:#F6E7C4; --low:#B0472E;
+  --field:#F6F8F7;
+  color-scheme: light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121A1D; --surface:#1A2428; --ink:#E4ECEA; --muted:#93A4A8; --line:#2E3B40;
+    --charge:#3FBF85; --charge-soft:#1D3A2E; --amber:#E2A93A; --amber-soft:#3A2F17; --low:#E07A5F;
+    --field:#202C31; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121A1D; --surface:#1A2428; --ink:#E4ECEA; --muted:#93A4A8; --line:#2E3B40;
+  --charge:#3FBF85; --charge-soft:#1D3A2E; --amber:#E2A93A; --amber-soft:#3A2F17; --low:#E07A5F;
+  --field:#202C31; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  font-size:16px;line-height:1.5;font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 20px 64px}
+header h1{font-size:clamp(28px,4.4vw,44px);font-stretch:78%;font-weight:800;line-height:1.05;margin:0 0 10px;letter-spacing:-.01em}
+header p{color:var(--muted);max-width:62ch;margin:0}
+
+/* hero battery */
+.hero{margin:28px 0 36px;display:grid;grid-template-columns:1fr;gap:18px}
+.battery{position:relative;display:flex;align-items:center;gap:0}
+.cell{flex:1;height:118px;border:3px solid var(--ink);border-radius:14px;padding:6px;position:relative;overflow:hidden;background:var(--surface)}
+.nub{width:14px;height:44px;background:var(--ink);border-radius:0 6px 6px 0}
+.fill{position:absolute;inset:6px auto 6px 6px;border-radius:8px;transition:width .5s ease}
+.fill.opt{background:var(--amber-soft)}
+.fill.base{background:var(--charge)}
+.fill.pess{background:color-mix(in srgb,var(--charge) 55%,var(--ink))}
+.cell-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px;pointer-events:none}
+.cell-label .big{font-size:clamp(34px,6vw,58px);font-weight:800;font-stretch:72%;color:#fff;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.cell-label .big small{font-size:.38em;font-weight:600;font-stretch:100%;margin-left:6px}
+.cell-label .side{text-align:right;font-size:14px;color:var(--ink);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:18px;font-size:14px;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+
+section{margin-top:40px}
+h2{font-size:22px;font-stretch:85%;font-weight:750;margin:0 0 4px}
+.lede{color:var(--muted);margin:0 0 16px;max-width:70ch;font-size:15px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font-weight:600;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.num,th.num{text-align:right}
+tr:last-child td{border-bottom:none}
+input[type=text],input[type=number],select{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%;min-width:0}
+input[type=number]{text-align:right}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--charge);outline-offset:2px}
+td input.name{min-width:170px}
+td input.n{width:84px}
+td select{min-width:110px}
+td input.url{width:150px}
+td input.date{width:92px}
+.linkcell{white-space:nowrap}
+.linkcell a{display:inline-block;margin-left:6px;font-weight:700;color:var(--charge);text-decoration:none;font-size:18px}
+.linkcell .nolink{margin-left:8px;color:var(--muted)}
+.src{font-size:12px;color:var(--muted);white-space:nowrap}
+.empty{color:var(--muted)}
+.field.wide{grid-column:1/-1}
+.hint.cal{color:var(--ink);font-weight:600}
+.trend{white-space:nowrap;font-size:13px}
+td input.mult{width:64px}
+.path-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:14px}
+.path-row select{width:auto}
+input.mini{width:56px}
+.lg-path::before{background:none!important;border-top:2px dashed var(--ink);height:0!important;width:16px!important;vertical-align:4px!important}
+td input.note{min-width:220px}
+tr.edited td{background:color-mix(in srgb,var(--amber-soft) 55%,transparent)}
+.topbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-top:20px}
+.topbar .tabs{margin-top:0}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools button{padding:7px 12px;font-size:14px}
+.sync{font-size:13px;color:var(--muted);padding:4px 10px;border-radius:99px;border:1px solid var(--line)}
+.sync[data-kind="shared"]{color:var(--ink);background:var(--charge-soft);border-color:transparent}
+.sync[data-kind="readonly"],.sync[data-kind="error"]{background:var(--amber-soft);color:var(--ink);border-color:transparent}
+#shareBtn{background:var(--charge);color:#fff;border-color:var(--charge)}
+.notice{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--amber-soft);display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.notice span{flex:1 1 280px}
+.kpi-block{margin-top:18px}
+.backup-panel{margin-top:14px}
+.bk-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.bk-head h2{margin:0}
+.kpi-block h3,.sub{font-size:16px;margin:0 0 8px;font-stretch:90%}
+.findings p{margin:0 0 10px}
+.findings p:last-child{margin:0}
+@media print{.topbar .tools,.notice{display:none}}
+.share3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.share3 small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.hero-strip{margin-top:24px}
+.hero-strip b{font-size:28px}
+.summary.hero-strip{gap:14px;background:none;border:none;overflow:visible;border-radius:0}
+.summary.hero-strip>div{position:relative;overflow:hidden;border-radius:16px;padding:18px 20px 20px;color:#fff;background:var(--g);box-shadow:0 10px 24px -14px var(--sh);transition:transform .2s ease,box-shadow .2s ease}
+.summary.hero-strip>div::after{content:"";position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.14);pointer-events:none}
+.summary.hero-strip>div::before{content:"";position:absolute;left:-20px;bottom:-40px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none}
+.summary.hero-strip>div:hover{transform:translateY(-2px);box-shadow:0 16px 30px -14px var(--sh)}
+.summary.hero-strip b{color:#fff;font-size:34px;letter-spacing:-.01em;position:relative}
+.summary.hero-strip span{color:rgba(255,255,255,.88);font-size:14px;position:relative}
+.summary.hero-strip>div:nth-child(1){--g:linear-gradient(135deg,#6d28d9 0%,#4f46e5 100%);--sh:#4f46e5}
+.summary.hero-strip>div:nth-child(2){--g:linear-gradient(135deg,#be185d 0%,#9333ea 100%);--sh:#be185d}
+.summary.hero-strip>div:nth-child(3){--g:linear-gradient(135deg,#1d4ed8 0%,#0e7490 100%);--sh:#1d4ed8}
+.summary.hero-strip>div:nth-child(4){--g:linear-gradient(135deg,#047857 0%,#0f766e 100%);--sh:#047857}
+@media (prefers-reduced-motion:reduce){.summary.hero-strip>div{transition:none}.summary.hero-strip>div:hover{transform:none}}
+.tabs{display:flex;gap:8px;margin-top:20px}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.conf{font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.conf.lo{background:var(--amber-soft);color:var(--ink)}
+.conf.ok{background:var(--charge-soft);color:var(--ink)}
+.conf.na{color:var(--muted)}
+button{font:inherit;font-weight:600;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px}
+button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.x{border:none;background:none;color:var(--muted);padding:4px 8px;font-size:18px;line-height:1}
+.row-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.field label{display:block;font-weight:600;font-size:14px;margin-bottom:4px}
+.field .hint{font-size:13px;color:var(--muted);margin-top:4px}
+.range-row{display:flex;align-items:center;gap:10px}
+.range-row input[type=range]{flex:1;accent-color:var(--charge)}
+.range-row output{min-width:54px;text-align:right;font-weight:700}
+
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.summary div{background:var(--surface);padding:14px 16px}
+.summary b{display:block;font-size:24px;font-stretch:80%;font-weight:750}
+.summary span{font-size:13px;color:var(--muted)}
+
+svg text{font-family:inherit;fill:var(--muted);font-size:12px}
+.chart-wrap{overflow-x:auto}
+.method{font-size:14px;color:var(--muted);max-width:75ch}
+.method p{margin:0 0 10px}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+
+.prodbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:18px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.prodbar button{font-size:14px;padding:7px 12px}
+.prodbar button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.prodbar .add{border-style:dashed}
+.subbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:12px}
+.subbar .tabs{margin-top:0}
+.pactions{display:flex;gap:6px;flex-wrap:wrap}
+.pactions button{font-size:13px;padding:6px 10px}
+.inline-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.inline-form input,.inline-form select{width:auto;min-width:160px}
+.spec td,.spec th{white-space:nowrap}
+.spec td.val{position:relative;min-width:120px}
+.spec td.val input{width:110px}
+.spec td.m-g{background:color-mix(in srgb,var(--charge) 22%,transparent)}
+.spec td.m-y{background:color-mix(in srgb,var(--amber) 22%,transparent)}
+.spec td.m-r{background:color-mix(in srgb,var(--low) 22%,transparent)}
+.spec .mk{border:none;background:none;padding:2px 4px;font-size:12px;color:var(--muted);cursor:pointer}
+.spec .our{background:color-mix(in srgb,var(--ink) 6%,transparent)}
+.spec input.aname{width:150px}.spec input.aunit{width:56px}.spec input.atol{width:52px}
+.spec .score b{font-size:15px}
+.spec-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);margin:8px 0}
+.spec-legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;background:var(--c)}
+.season-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:6px}
+.season-grid label{font-size:12px;color:var(--muted)}
+.season-grid input{padding:4px 6px}
+.port td,.port th{white-space:nowrap}
+.grip{cursor:grab;color:var(--muted);touch-action:none;user-select:none;-webkit-user-select:none;text-align:center;width:22px;font-size:16px}
+.sortable-tab{touch-action:none}
+.dragging{opacity:.55;outline:2px dashed var(--charge);outline-offset:-2px}
+body.sorting,body.sorting *{cursor:grabbing!important;user-select:none!important}
+[hidden]{display:none!important}
+.market.ref .mx-only,.market.ref .field.mx{display:none!important}
+.rolebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 0;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.rolebar select{width:auto;font-weight:600}
+.market.ref .rolebar{background:color-mix(in srgb,#1d4ed8 8%,var(--surface));border-color:color-mix(in srgb,#1d4ed8 35%,var(--line))}
+.refbadge{font-size:11px;font-weight:600;padding:1px 6px;border-radius:99px;background:color-mix(in srgb,#1d4ed8 15%,transparent);margin-left:4px}
+.price-cards .rec{background:color-mix(in srgb,var(--charge) 14%,var(--surface))}
+.price-cards .rec b{color:var(--charge)}
+tr.prec td{background:color-mix(in srgb,var(--charge) 10%,transparent);font-weight:600}
+tr.pcur td{background:color-mix(in srgb,#7c3aed 10%,transparent)}
+.papply{font-size:12px;padding:4px 10px}
+.field.inactive>label,.field.inactive input,.field.inactive select,.field.inactive .range-row,.field.inactive .share3,.field.inactive .path-row,.field.inactive .season-grid{opacity:.45}
+.inactive-note{color:var(--amber)!important;font-weight:600}
+.field.calibrated input[data-p]{background:color-mix(in srgb,var(--charge) 12%,var(--field))}
+.calinfo{color:var(--charge)!important;font-weight:600}
+.calinfo.nocal{color:var(--muted)!important;font-weight:500}
+.field .manbox{display:flex;gap:6px;align-items:center;font-size:13px!important;font-weight:500!important;margin-top:6px;color:var(--muted)}
+.field .manbox[hidden]{display:none!important}
+.scen-panel{margin:24px 0 8px}
+.scen-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:10px}
+.scen-head h2{margin:0}
+.scen-row{display:grid;grid-template-columns:minmax(120px,190px) 1fr minmax(130px,auto);gap:14px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.scen-row:first-child{border-top:none}
+.scen-name{font-weight:700}.scen-name small,.scen-val small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.scen-track{height:18px;background:color-mix(in srgb,var(--line) 45%,transparent);border-radius:6px;overflow:hidden}
+.scen-bar{height:100%;border-radius:6px}
+.s-pess .scen-bar{background:color-mix(in srgb,var(--charge) 55%,var(--ink))}.s-base .scen-bar{background:var(--charge)}.s-opt .scen-bar{background:var(--amber)}
+.s-path .scen-bar{background:repeating-linear-gradient(90deg,var(--ink) 0 10px,transparent 10px 14px)}
+.s-karma{background:color-mix(in srgb,var(--charge) 10%,transparent);border-radius:8px;padding:10px 8px;border-top:2px solid var(--ink)}
+.s-karma .scen-bar{background:var(--ink)}
+.s-karma .scen-val b{font-size:20px}
+.scen-val{text-align:right}.scen-val b{font-size:17px;font-stretch:85%}
+.share4{grid-template-columns:repeat(4,1fr)}
+@media (max-width:560px){.scen-row{grid-template-columns:1fr;gap:4px}.scen-val{text-align:left}}
+.savebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.saveNow{background:var(--charge);color:#fff;border-color:var(--charge)}
+.saveinfo{font-size:13px;color:var(--muted)}
+.warnbar{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--low);color:#fff;display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-weight:600}
+.warnbar span{flex:1 1 280px}
+.warnbar button{background:#fff;color:var(--ink);border-color:#fff}
+.sync{min-width:250px;text-align:center;display:inline-block}
+.sync[data-kind="pending"]{background:var(--amber-soft);color:var(--ink);border-color:transparent}
+.linkbtn{border:none;background:none;padding:0;color:var(--charge);font-weight:600;text-decoration:underline;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Marxlow satış öngörü sistemi</h1>
+  <p>Her ürün ve pazar için önce toplam aylık satış hacmini tahmin eder, sonra bunun ne kadarının yeni bir marka olarak Marxlow’a düşebileceğini senaryolarla gösterir. Tüm rakamlar değiştirilebilir.</p>
+  <div class="topbar">
+    <div class="tools">
+      <span class="sync" id="syncStatus" aria-live="polite">Yalnızca bu tarayıcıda</span>
+      <button id="shareBtn" hidden>Ekiple paylaş</button>
+    </div>
+    <div class="tools">
+      <button id="exportJson">Dışa aktar</button>
+      <button id="exportCsv">Excel (CSV)</button>
+      <button id="importBtn">İçe aktar</button>
+      <button id="backupBtn">Yedekler</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+  </div>
+  <nav class="prodbar" id="prodbar" aria-label="Ürünler"></nav>
+  <div class="subbar" id="subbar"></div>
+  <div class="notice standalone">Bu sayfadaki değişiklikleriniz yalnızca kendi tarayıcınızda saklanır; başkaları göremez. Çalışmanızı saklamak veya paylaşmak için “Dışa aktar”ı kullanın.</div>
+  <div class="warnbar" id="warnBar" hidden></div>
+  <div class="notice" id="notice" hidden></div>
+  <div class="panel backup-panel" id="backupPanel" hidden></div>
+</header>
+<main id="view"></main>
+<section class="method" id="method">
+  <h2 style="color:var(--ink)">Hesap nasıl yapılıyor</h2>
+  <p>Her satırda elinizdeki tüm sinyaller ayrı ayrı aylık satış tahminine çevrilir ve güvenilirliklerine göre ağırlıklı ortalaması alınır. Yorum: son dönem yorum sayısı varsa o (bugünkü hızı doğrudan ölçer; ağırlığı 10 yoruma kadar artar), yoksa toplam yorum ÷ ürün yaşı; son dönem verisi olan satırlarda birikimli soru ve favori sinyallerinin ağırlığı “son dönem yorumunun önceliği” oranında azaltılır; ikisi de yorum bırakma oranına bölünür, puan 4,5’in altındaysa aşağı çekilir. Soru-cevap: aylık soru × soru başına satış. Rozet: aylığa çevrilip alt sınır olduğu için çarpanla büyütülür ve en yüksek ağırlığı alır. Favori ve sepet: dönüşüm oranlarıyla aylığa çevrilir. Otomatik kalibrasyon açıkken oranlar, aynı pazarda birden fazla sinyali olan ürünlerden öğrenilir. Editör çarpanı en son uygulanan manuel düzeltmedir.</p>
+  <p>Muadil ve hacim tablolarındaki ölçülen satışlar toplanıp ölçülen verinin pazardaki payına bölünerek toplam pazar bulunur. Marxlow’un olgun dönem satışı bu hacim ile seçilen pazar payının çarpımıdır. Pay isteğe bağlı olarak iki etkenle ölçeklenir: fiyat konumu (Marxlow fiyatının muadillerin ortalama fiyatına oranı) ve teknik üstünlük (teknik karşılaştırma tablosundaki renklerin önem ağırlıklı skoru). Reklam yoğunluğu, sıfır yorumla başlama etkisi, geçişli senaryo, mevsimsellik (12 ay ortalaması 1’e eşitlenerek) ve yıllık pazar büyümesi ayrıca uygulanır. Karma senaryo, kötümser, baz, iyimser ve geçişli senaryoların seçilen ağırlıklarla ay ay ortalamasıdır.</p>
+  <p>Teknik karşılaştırmada sayısal özellikler Marxlow’la otomatik kıyaslanır: rakip tolerans içindeyse sarı, Marxlow’dan iyiyse kırmızı, kötüyse yeşil. Metin özelliklerde veya otomatik rengi değiştirmek istediğinizde hücredeki küçük düğmeyle rengi elle seçersiniz.</p>
+  <p>Kısıtlar: pazaryerleri satış adedi yayınlamaz; rozetler ve sayaçlar o anın görüntüsüdür. Tahminler kesin satış verisi değildir, aralıklar bu belirsizliği yansıtır.</p>
+</section>
+</div>
+<script>
+(function(){
+"use strict";
+const KEY="marxlow-forecast-web-v1", OUR="@marxlow";
+const vkey=n=>"k_"+encodeURIComponent(n);
+const MONTHS=["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const SEASONS={
+  duz:{label:"Düz",v:[1,1,1,1,1,1,1,1,1,1,1,1]},
+  trGuc:{label:"Güç istasyonu (Türkiye)",v:[1.1,1.0,0.9,0.95,1.05,1.15,1.15,1.1,0.9,0.95,1.2,1.15]},
+  usGuc:{label:"Güç istasyonu (ABD)",v:[0.85,0.85,0.9,0.95,1.0,1.1,1.15,1.15,1.1,1.0,1.4,1.5]},
+  kis:{label:"Kış ağırlıklı",v:[1.25,1.15,1.0,0.9,0.85,0.8,0.8,0.85,0.95,1.05,1.2,1.3]},
+  yaz:{label:"Yaz ağırlıklı",v:[0.8,0.8,0.9,1.0,1.1,1.25,1.3,1.25,1.05,0.9,0.8,0.85]},
+  yilsonu:{label:"Kasım–aralık ağırlıklı",v:[0.85,0.85,0.9,0.9,0.95,0.95,0.95,0.95,1.0,1.05,1.45,1.6]}
+};
+// Profillerin 12 aylık ortalaması 1’e eşitlenir: mevsimsellik yıllık toplamı değiştirmez, yalnızca aylara dağıtır
+Object.values(SEASONS).forEach(s=>{const m=s.v.reduce((a,b)=>a+b,0)/12; s.v=s.v.map(x=>Math.round(x/m*1000)/1000);});
+const BASEP={rate:4,coverage:35,sharePess:3,shareBase:6,shareOpt:12,priceOn:true,elast:1.2,techOn:false,techK:30,ads:"1",ramp:4,start:"2026-12",season:true,seasonV:SEASONS.trGuc.v.slice(),ourPrice:"",favConv:8,cartMult:0.7,badgeUp:1.3,salesPerQ:15,autoCal:true,defaultAge:12,recentPriority:50,interestCap:5,growth:10,wPess:20,wBase:40,wOpt:20,wPath:20,pathOn:true,pathFrom:"sharePess",pathTo:"shareOpt",pathHold:2,pathMonths:4};
+const TPL={
+  tr:{label:"Türkiye",cur:"TL",channels:["Hepsiburada","Trendyol","Amazon TR","n11","MediaMarkt","Teknosa","Vatan","Diğer"],p:{}},
+  us:{label:"ABD (Amazon)",cur:"$",channels:["Amazon US","Walmart","Best Buy","Marka sitesi","Diğer"],p:{rate:1.5,coverage:50,sharePess:0.5,shareBase:1,shareOpt:2,ramp:6,start:"2027-03",seasonV:SEASONS.usGuc.v.slice()}},
+  eu:{label:"Avrupa (Amazon)",cur:"€",channels:["Amazon","Marka sitesi","Diğer"],p:{rate:1.5,coverage:50,sharePess:0.5,shareBase:1,shareOpt:2,ramp:6,start:"2027-03",seasonV:SEASONS.duz.v.slice()}}
+};
+const COVHINT={tr:"Tablolarda verisi girilen kanalların, segmentin tüm satışları içindeki tahmini payı. Yalnızca Hepsiburada verisi varken %30–40, Trendyol eklenince %65–80 civarı makul.",us:"Amazon’un bu pazarda segmentin tüm satışları içindeki tahmini payı. %40–60 aralığı makul bir başlangıç.",eu:"Verisi girilen kanalların pazardaki tahmini payı."};
+const SHAREHINT={tr:"Kategoride yeni ama başka gruplarda tanınan bir marka için %3 / %6 / %12 başlangıç önerisi.",us:"Sıfırdan bir marka için %0,5 / %1 / %2 başlangıç önerisi; pazar büyük ve kalabalık.",eu:"Sıfırdan bir marka için %0,5 / %1 / %2 başlangıç önerisi."};
+const SEED={"id": "marxlow-300w-pro", "name": "Marxlow 300W Pro", "mOrder": ["tr", "us"], "markets": {"tr": {"label": "Türkiye", "cur": "TL", "channels": ["Hepsiburada", "Trendyol", "Amazon TR", "n11", "MediaMarkt", "Teknosa", "Vatan", "Diğer"], "tpl": "tr", "id": "tr", "p": {"ads": "1", "autoCal": true, "badgeUp": 1.3, "cartMult": 0.7, "coverage": 35, "defaultAge": 12, "elast": 1.2, "favConv": 8, "ourPrice": 12990, "pathFrom": "sharePess", "pathHold": 2, "pathMonths": 4, "pathOn": true, "pathTo": "shareOpt", "ramp": 4, "rate": 4, "salesPerQ": 15, "season": true, "shareBase": 6, "shareOpt": 12, "sharePess": 3, "start": "2026-12", "priceOn": true, "techOn": false, "techK": 30, "seasonV": [1.1, 1.0, 0.9, 0.95, 1.05, 1.15, 1.15, 1.1, 0.9, 0.95, 1.2, 1.15]}, "rows": [{"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2025-03", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/anker-solix-c300x-ac-288wh-i-300w-600w-surgepad-tasinabilir-guc-kaynagi-4-farkli-sarj-modu-a1723-anker-turkiye-garantili-p-HBCV000076UTEM", "name": "Anker SOLIX C300X AC", "price": 14999, "qa": 214, "rating": 4.6, "recentDays": 90, "recentRev": 2, "rev": 160, "mult": "", "note": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Trendyol", "date": "", "fav": 3900, "grp": "muadil", "inc": true, "link": "https://www.trendyol.com/anker/solix-c300x-ac-288wh-i-300w-600w-surgepad-tasinabilir-guc-kaynagi-p-872172817", "name": "Anker SOLIX C300X AC", "price": 19999, "qa": 115, "rating": 4.8, "recentDays": 60, "recentRev": "", "rev": 65, "mult": "", "note": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Vatan", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.vatanbilgisayar.com/anker-solix-c300x-288-wh-600w-tasinabilir-guc-kaynagi.html", "name": "Anker SOLIX C300X AC", "price": 14999, "rating": 5, "recentDays": 60, "recentRev": "", "rev": 3, "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon TR", "date": "", "fav": "", "grp": "muadil", "inc": false, "link": "", "name": "Anker SOLIX C300X AC", "price": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2026-04", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/hyundai-thor-300-tasinabilir-guc-istasyonu-300w-saf-sinus-lifepo4-power-station-pm-HBC0000BMSVJU", "name": "Hyundai Thor 300", "price": 11990, "qa": 16, "rating": 4.9, "recentDays": 180, "recentRev": 2, "rev": 8, "mult": "", "note": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Trendyol", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "", "name": "Hyundai Thor 300", "price": 10545, "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "n11", "date": "2026-04", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.n11.com/urun/hyundai-thor-300-tasinabilir-guc-istasyonu-300w-saf-sinus-lifepo4-power-station-116097947", "name": "Hyundai Thor 300", "price": 12598, "rating": 5, "recentDays": 60, "recentRev": "", "rev": 1, "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Teknosa", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.teknosa.com/hyundai-thor-300-tasinabilir-guc-istasyonu-300w-saf-sinus-lifepo4-power-station-p-784958427", "name": "Hyundai Thor 300", "price": 13104, "rating": "", "recentDays": 60, "recentRev": "", "rev": 0, "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Diğer", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.koctas.com.tr/hyundai-thor-300-tasinabilir-guc-istasyonu-300w-saf-sinus-lifepo4-power-station/p/5003034465", "name": "Hyundai Thor 300", "price": 13878, "rating": 4, "recentDays": 60, "recentRev": "", "rev": 1, "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2026-09", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/ecoflow-river-3-ups-guc-kaynagi-245wh-eu-pm-HBC00009NRSSA", "name": "EcoFlow River 3 UPS", "price": 14999, "qa": 4, "rating": "", "recentDays": 60, "recentRev": 2, "rev": 2, "mult": "", "note": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon TR", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.amazon.com.tr/EcoFlow-RIVER-UPS-Kayna%C4%9F%C4%B1-245Wh/dp/B0FLQ8P49M", "name": "EcoFlow River 3 UPS", "price": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Diğer", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.pazarama.com/ecoflow-river-3-ups-guc-kaynagi-245wh-eu-p-4895251627030", "name": "EcoFlow River 3 UPS", "price": 16999, "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/jackery-explorer-240-v2-pm-HBC0000F13RYP", "name": "Jackery Explorer 240 v2", "price": 13855, "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/antfea-tasinabilir-guc-istasyonu-xc-80857155-b183814", "name": "Antfea S300", "price": 7386, "rating": 5, "recentDays": 30, "recentRev": 1, "rev": 2, "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "MediaMarkt", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.mediamarkt.com.tr/tr/product/_cata-etna-20-amper-300-watt-tasinabilir-guc-kaynagi-siyah-176117705.html", "name": "Cata CT-4041 Etna", "price": 6500, "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2023-05", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/anker-solix-522-powerhouse-300wh-i-300w-tasinabilir-guc-kaynagi-a1721-anker-turkiye-garantili-pm-HBC0000777BR9", "name": "Anker 521 / 522 (ortak sayfa)", "price": "", "qa": 195, "rating": 4.6, "recentDays": 360, "recentRev": 0, "rev": 229, "mult": "", "note": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/ezviz-ps300-tasinabilir-guc-istasyonu-pm-HBC00004J6X9A", "name": "Ezviz PS300 (Li-ion)", "price": 7499, "rating": 4.8, "recentDays": 60, "recentRev": "", "rev": 41, "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2024-09", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/orbus-300w-tasinabilir-guc-kaynagi-power-station-pm-HBC0000CPS3S7", "name": "Orbus OPS-300 (Li-ion)", "price": 12000, "qa": 6, "rating": 4.9, "recentDays": 60, "recentRev": "", "rev": 11, "mult": "", "note": ""}]}, "us": {"label": "ABD (Amazon)", "cur": "$", "channels": ["Amazon US", "Walmart", "Best Buy", "Marka sitesi", "Diğer"], "tpl": "us", "id": "us", "p": {"ads": "1", "autoCal": true, "badgeUp": 1.3, "cartMult": 0.7, "coverage": 50, "defaultAge": 12, "elast": 1.2, "favConv": 8, "ourPrice": 199, "pathFrom": "sharePess", "pathHold": 2, "pathMonths": 4, "pathOn": true, "pathTo": "shareOpt", "ramp": 6, "rate": 1.5, "salesPerQ": 15, "season": true, "shareBase": 1, "shareOpt": 2, "sharePess": 0.5, "start": "2027-03", "priceOn": true, "techOn": false, "techK": 30, "seasonV": [0.85, 0.85, 0.9, 0.95, 1.0, 1.1, 1.15, 1.15, 1.1, 1.0, 1.4, 1.5]}, "rows": [{"badge": 500, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.amazon.com/clp/B0DBLJRRPW", "name": "Anker SOLIX C300 + 60W panel", "price": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": 100, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.amazon.com/ecoflow-river/s?k=ecoflow+river", "name": "EcoFlow River 3 (245Wh)", "price": 239, "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": 100, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.amazon.com/ecoflow-river-portable-power-station/s?k=ecoflow+river+portable+power+station", "name": "EcoFlow River 2 (256Wh)", "price": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": 200, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.amazon.com/river-3-power-station/s?k=river+3+power+station", "name": "EcoFlow River 2 240 (243Wh)", "price": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "", "name": "Jackery Explorer 240 v2", "price": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": 2000, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.amazon.com/Anker-Portable-Generator-Traveling-Emergencies/dp/B0D62PMB3R", "name": "Anker SOLIX C300 DC (AC prizsiz)", "price": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}, {"badge": 7000, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "hacim", "inc": false, "link": "https://www.amazon.com/ecoflow-portable-power-station/s?k=ecoflow+portable+power+station", "name": "Jackery Explorer 300 (doğrulanmalı)", "price": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": "", "mult": "", "note": "", "qa": ""}]}}, "specs": {"attrs": [{"id": "cap", "name": "Kapasite", "unit": "Wh", "dir": "high", "tol": 5, "w": 3}, {"id": "cont", "name": "Sürekli AC güç", "unit": "W", "dir": "high", "tol": 5, "w": 3}, {"id": "peak", "name": "Tepe güç", "unit": "W", "dir": "high", "tol": 10, "w": 1}, {"id": "chem", "name": "Pil tipi", "unit": "", "dir": "none", "tol": 0, "w": 3}, {"id": "cycles", "name": "Döngü ömrü", "unit": "döngü", "dir": "high", "tol": 10, "w": 2}, {"id": "usbc", "name": "USB-C maks. güç", "unit": "W", "dir": "high", "tol": 10, "w": 2}, {"id": "solar", "name": "Güneş paneli girişi", "unit": "W", "dir": "high", "tol": 10, "w": 1}, {"id": "wl", "name": "Kablosuz şarj", "unit": "", "dir": "none", "tol": 0, "w": 1}, {"id": "ups", "name": "UPS / EPS", "unit": "", "dir": "none", "tol": 0, "w": 2}, {"id": "app", "name": "Uygulama / bağlantı", "unit": "", "dir": "none", "tol": 0, "w": 1}, {"id": "weight", "name": "Ağırlık", "unit": "kg", "dir": "low", "tol": 10, "w": 1}, {"id": "warranty", "name": "Garanti", "unit": "yıl", "dir": "high", "tol": 0, "w": 2}], "vals": {"k_Anker%20SOLIX%20C300X%20AC": {"cap": 288, "cont": 300, "peak": 600, "chem": "LiFePO4", "cycles": 3000, "usbc": 140, "solar": 100, "wl": "Yok", "ups": "UPS (10 ms)", "app": "Wi-Fi + Bluetooth", "weight": 4.1, "warranty": 2}, "k_Hyundai%20Thor%20300": {"cap": 204.8, "cont": 300, "peak": 500, "chem": "LiFePO4", "cycles": 3000, "usbc": 65, "solar": 120, "wl": "Yok", "app": "Smart Life", "warranty": 2}, "k_EcoFlow%20River%203%20UPS": {"cap": 245, "cont": 300, "peak": 600, "chem": "LiFePO4", "ups": "UPS (10 ms)"}, "k_Jackery%20Explorer%20240%20v2": {"cap": 256, "cont": 300, "chem": "LiFePO4", "cycles": 3000, "usbc": 100, "app": "Wi-Fi + Bluetooth", "weight": 3.5}, "k_Antfea%20S300": {"cap": 288, "cont": 300}, "k_Cata%20CT-4041%20Etna": {"cap": 198.4, "cont": 300}, "k_Anker%20521%20%2F%20522%20(ortak%20sayfa)": {"cap": "256 / 320", "cont": "200 / 300", "chem": "LiFePO4"}, "k_Ezviz%20PS300%20(Li-ion)": {"cap": 313, "cont": 300, "chem": "Li-ion", "cycles": 1000, "weight": 3.6}, "k_Orbus%20OPS-300%20(Li-ion)": {"cap": 296, "cont": 300, "chem": "Li-ion"}, "k_Anker%20SOLIX%20C300%20%2B%2060W%20panel": {"cap": 288, "chem": "LiFePO4", "usbc": 140}, "k_EcoFlow%20River%203%20(245Wh)": {"cap": 245, "chem": "LiFePO4"}, "k_EcoFlow%20River%202%20(256Wh)": {"cap": 256, "cont": 300, "chem": "LiFePO4"}, "k_EcoFlow%20River%202%20240%20(243Wh)": {"cap": 243, "cont": 300, "chem": "LiFePO4"}, "k_Anker%20SOLIX%20C300%20DC%20(AC%20prizsiz)": {"cap": 288, "chem": "LiFePO4"}, "k_Jackery%20Explorer%20300%20(do%C4%9Frulanmal%C4%B1)": {"cap": 292}, "k_%40marxlow": {"cap": 256, "cont": 300, "peak": 600, "chem": "LiFePO4", "usbc": 65, "solar": 140, "wl": "Var", "ups": "EPS", "app": "Wi-Fi"}}, "marks": {"k_Ezviz%20PS300%20(Li-ion)|chem": "g", "k_Orbus%20OPS-300%20(Li-ion)|chem": "g", "k_Anker%20SOLIX%20C300X%20AC|ups": "y", "k_EcoFlow%20River%203%20UPS|ups": "y", "k_Anker%20SOLIX%20C300X%20AC|wl": "g", "k_Hyundai%20Thor%20300|wl": "g"}}};
+const clone=o=>o===undefined?undefined:JSON.parse(JSON.stringify(o));
+const fmt=n=>isFinite(n)?Math.round(n).toLocaleString("tr-TR"):"–";
+const fmt1=n=>isFinite(n)?n.toLocaleString("tr-TR",{maximumFractionDigits:1}):"–";
+const num=v=>{const x=parseFloat(String(v??"").replace(",","."));return isFinite(x)?x:NaN};
+const hasNum=v=>String(v??"").trim()!==""&&isFinite(num(v));
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+const med=a=>{const s=[...a].sort((x,y)=>x-y),m=Math.floor(s.length/2);return s.length?(s.length%2?s[m]:(s[m-1]+s[m])/2):NaN;};
+const NOW=new Date(), nowIdx=NOW.getFullYear()*12+NOW.getMonth();
+const slug=s=>(String(s||"urun").toLowerCase().replace(/ç/g,"c").replace(/ğ/g,"g").replace(/ı/g,"i").replace(/ö/g,"o").replace(/ş/g,"s").replace(/ü/g,"u").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40)||"urun")+"-"+Date.now().toString(36).slice(-4);
+const curFmt=(v,cur)=>{if(!isFinite(v)) return "–"; const a=Math.abs(v); const s=a>=1e6?(v/1e6).toLocaleString("tr-TR",{maximumFractionDigits:1})+" mn":a>=1e3?(v/1e3).toLocaleString("tr-TR",{maximumFractionDigits:0})+" bin":fmt(v); return (cur==="$"||cur==="€")?cur+s:s+" "+cur;};
+
+const roleOf=M=>M&&M.role?M.role:((M&&M.tpl)==="tr"?"sales":"reference");
+const isSales=M=>roleOf(M)==="sales";
+/* ---------- model ---------- */
+function newMarket(tplId,label,cur,id){
+  const t=TPL[tplId]||TPL.tr;
+  return {id:id||("m-"+Date.now().toString(36)),tpl:tplId,label:label||t.label,cur:cur||t.cur,channels:t.channels.slice(),p:Object.assign(clone(BASEP),clone(t.p)),rows:[]};
+}
+function newRow(M,grp){return {id:"r"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),inc:true,grp:grp||"muadil",name:"",ch:M.channels[0],link:"",price:"",rating:"",rev:"",recentRev:"",recentDays:60,qa:"",fav:"",cart:"",badge:"",badgeDays:"",date:"",mult:"",note:""};}
+function emptyProduct(name){
+  const tr=newMarket("tr",null,null,"tr"), us=newMarket("us",null,null,"us");
+  return {id:slug(name),name,mOrder:["tr","us"],markets:{tr,us},specs:{attrs:[],vals:{},marks:{}}};
+}
+/* Ortak kayıtta satırlar ve özellikler kimliğe göre anahtarlı tutulur; böylece iki kişinin farklı alanlardaki değişiklikleri sunucuda birleşir */
+function fromServer(D){
+  const P=clone(D)||{};
+  Object.keys(P.markets||{}).forEach(mid=>{const M=P.markets[mid]; if(!M){delete P.markets[mid];return;}
+    if(M.rows&&!Array.isArray(M.rows)){const map=M.rows, ord=(M.rowOrder||[]).filter(id=>map[id]); Object.keys(map).forEach(id=>{if(map[id]&&!ord.includes(id)) ord.push(id);}); M.rows=ord.map(id=>Object.assign({id},map[id]));}
+    delete M.rowOrder;});
+  if(P.specs&&P.specs.attrs&&!Array.isArray(P.specs.attrs)){const map=P.specs.attrs, ord=(P.specs.attrOrder||[]).filter(id=>map[id]); Object.keys(map).forEach(id=>{if(map[id]&&!ord.includes(id)) ord.push(id);}); P.specs.attrs=ord.map(id=>Object.assign({id},map[id]));}
+  if(P.specs){delete P.specs.attrOrder; ["vals","marks"].forEach(k=>{const o=P.specs[k]||{}; Object.keys(o).forEach(x=>{if(o[x]===null) delete o[x]; else if(o[x]&&typeof o[x]==="object") Object.keys(o[x]).forEach(y=>{if(o[x][y]===null) delete o[x][y];});});});}
+  return P;
+}
+function toServer(P){
+  const D=clone(P);
+  Object.values(D.markets||{}).forEach(M=>{const map={}; (M.rows||[]).forEach(r=>{const x=Object.assign({},r); delete x.id; map[r.id]=x;}); M.rowOrder=(M.rows||[]).map(r=>r.id); M.rows=map;});
+  if(D.specs){const map={}; (D.specs.attrs||[]).forEach(a=>{const x=Object.assign({},a); delete x.id; map[a.id]=x;}); D.specs.attrOrder=(D.specs.attrs||[]).map(a=>a.id); D.specs.attrs=map;}
+  return D;
+}
+function isLegacy(raw){return !!raw&&Object.values(raw.markets||{}).some(M=>M&&Array.isArray(M.rows));}
+function patchOf(b,l){ // b ve l sunucu biçiminde; l'de değişen yaprakları döndürür (silinenler null)
+  if(stable(b)===stable(l)) return undefined;
+  if(isObj(b)&&isObj(l)){const out={}; let any=false; new Set([...Object.keys(b),...Object.keys(l)]).forEach(k=>{
+    if(!(k in l)){out[k]=null;any=true;return;} const sub=patchOf(b[k],l[k]); if(sub!==undefined){out[k]=sub;any=true;}}); return any?out:undefined;}
+  return l===undefined?null:clone(l);
+}
+function normalize(P){
+  P.markets=P.markets||{}; Object.keys(P.markets).forEach(k=>{if(!P.markets[k]) delete P.markets[k];});
+  P.mOrder=(P.mOrder||Object.keys(P.markets||{})).filter(m=>P.markets&&P.markets[m]);
+  P.mOrder.forEach(mid=>{const M=P.markets[mid]; M.id=mid; M.tpl=M.tpl||(mid==="us"?"us":"tr");
+    const t=TPL[M.tpl]||TPL.tr; M.channels=M.channels&&M.channels.length?M.channels:t.channels.slice(); M.label=M.label||t.label; M.cur=M.cur||t.cur;
+    M.p=Object.assign(clone(BASEP),clone(t.p),M.p||{}); if(!Array.isArray(M.p.seasonV)||M.p.seasonV.length!==12) M.p.seasonV=(t.p.seasonV||BASEP.seasonV).slice();
+    M.rows=(M.rows||[]).map((r,i)=>Object.assign(newRow(M,r.grp),{id:"r-"+mid+"-"+i},r));});
+  P.specs=P.specs||{}; P.specs.attrs=P.specs.attrs||[]; P.specs.vals=P.specs.vals||{}; P.specs.marks=P.specs.marks||{};
+  const fixK=k=>k.startsWith("k_")?k:vkey(k==="__our__"?OUR:k), nv={}, nm={};
+  Object.entries(P.specs.vals).forEach(([k,v])=>nv[fixK(k)]=v); Object.entries(P.specs.marks).forEach(([k,v])=>{const i=k.lastIndexOf("|"); nm[fixK(k.slice(0,i))+k.slice(i)]=v;}); P.specs.vals=nv; P.specs.marks=nm;
+  return P;
+}
+let APP;
+const DATA_VERSION="2026-11-09 06:24";
+const START={"order": ["marxlow-300w-pro", "marxlow-1800w-am1j"], "products": {"marxlow-300w-pro": {"id": "marxlow-300w-pro", "mOrder": ["tr", "us"], "markets": {"tr": {"channels": ["Hepsiburada", "Trendyol", "Amazon TR", "n11", "MediaMarkt", "Teknosa", "Vatan", "Diğer"], "cur": "TL", "id": "tr", "label": "Türkiye", "p": {"ads": "1", "autoCal": true, "badgeUp": 1.3, "cartMult": 0.7, "cartMultMan": false, "coverage": 70, "defaultAge": 18, "elast": 1.2, "favConv": 2, "growth": 10, "ourPrice": 12990, "pathFrom": "sharePess", "pathHold": 2, "pathMonths": 4, "pathOn": true, "pathTo": "shareOpt", "priceOn": true, "ramp": 4, "rate": 5.5, "recentPriority": 40, "salesPerQ": 20, "salesPerQMan": false, "season": true, "seasonPreset": "trGuc", "seasonV": [1.048, 0.952, 0.857, 0.905, 1, 1.095, 1.095, 1.048, 0.857, 0.905, 1.143, 1.095], "shareBase": 6, "shareOpt": 12, "sharePess": 3, "start": "2026-12", "techK": 15, "techOn": false}, "rowOrder": ["r-tr-0", "r-tr-1", "r-tr-2", "r-tr-3", "r-tr-4", "r-tr-5", "r-tr-6", "r-tr-7", "r-tr-8", "r-tr-9", "r-tr-10", "r-tr-11", "r-tr-12", "r-tr-13", "r-tr-14", "r-tr-15", "r-tr-16", "r-tr-17", "r-tr-18", "r-tr-19", "rmw7yfkve2bsb"], "rows": {"r-tr-0": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2025-03", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/anker-solix-c300x-ac-288wh-i-300w-600w-surgepad-tasinabilir-guc-kaynagi-4-farkli-sarj-modu-a1723-anker-turkiye-garantili-p-HBCV000076UTEM", "mult": "", "name": "Anker SOLIX C300X AC", "note": "", "price": 14999, "qa": 214, "rating": 4.6, "recentDays": 90, "recentRev": "24", "rev": "161"}, "r-tr-1": {"badge": "", "badgeDays": "", "cart": "", "ch": "Trendyol", "date": "", "fav": 3900, "grp": "muadil", "inc": true, "link": "https://www.trendyol.com/anker/solix-c300x-ac-288wh-i-300w-600w-surgepad-tasinabilir-guc-kaynagi-p-872172817", "mult": "", "name": "Anker SOLIX C300X AC", "note": "", "price": 19999, "qa": 115, "rating": 4.8, "recentDays": "90", "recentRev": "14", "rev": 65}, "r-tr-10": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2026-09", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/ecoflow-river-3-ups-guc-kaynagi-245wh-eu-pm-HBC00009NRSSA", "mult": "", "name": "EcoFlow River 3 UPS", "note": "", "price": 14999, "qa": "5", "rating": "4", "recentDays": 60, "recentRev": 2, "rev": 2}, "r-tr-11": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon TR", "date": "", "fav": "", "grp": "muadil", "inc": false, "link": "https://www.amazon.com.tr/EcoFlow-RIVER-UPS-Kayna%C4%9F%C4%B1-245Wh/dp/B0FLQ8P49M", "mult": "", "name": "EcoFlow River 3 UPS", "note": "", "price": "", "qa": "", "rating": "5", "recentDays": "360", "recentRev": "1", "rev": "1"}, "r-tr-12": {"badge": "", "badgeDays": "", "cart": "", "ch": "Diğer", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.pazarama.com/ecoflow-river-3-ups-guc-kaynagi-245wh-eu-p-4895251627030", "mult": "", "name": "EcoFlow River 3 UPS", "note": "", "price": "15999", "qa": "", "rating": "", "recentDays": "360", "recentRev": "", "rev": ""}, "r-tr-13": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/jackery-explorer-240-v2-pm-HBC0000F13RYP", "mult": "0.5", "name": "Jackery Explorer 240 v2", "note": "Çarpan azaltıldı. Fazla satış olduğunu düşünmüyorum.", "price": 13855, "qa": "2", "rating": "", "recentDays": "360", "recentRev": "", "rev": ""}, "r-tr-14": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/antfea-s300-tasinabilir-guc-sistemi-pm-HBC00009B2IK4", "mult": "", "name": "Antfea S300", "note": "", "price": 7386, "qa": "13", "rating": 5, "recentDays": "360", "recentRev": 1, "rev": 2}, "r-tr-15": {"badge": "", "badgeDays": "", "cart": "", "ch": "MediaMarkt", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.mediamarkt.com.tr/tr/product/_cata-etna-20-amper-300-watt-tasinabilir-guc-kaynagi-siyah-176117705.html", "mult": "", "name": "Cata CT-4041 Etna", "note": "", "price": 6500, "qa": "", "rating": "", "recentDays": "360", "recentRev": "", "rev": ""}, "r-tr-16": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2023-05", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/anker-solix-522-powerhouse-300wh-i-300w-tasinabilir-guc-kaynagi-a1721-anker-turkiye-garantili-pm-HBC0000777BR9", "mult": "", "name": "Anker 521 / 522 (ortak sayfa)", "note": "", "price": "23000", "qa": "36", "rating": 4.6, "recentDays": "180", "recentRev": "10", "rev": 229}, "r-tr-17": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/ezviz-ps300-tasinabilir-guc-istasyonu-pm-HBC00004J6X9A", "mult": "", "name": "Ezviz PS300 (Li-ion)", "note": "", "price": 7499, "qa": "", "rating": 4.8, "recentDays": 60, "recentRev": "", "rev": 41}, "r-tr-18": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2024-09", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/orbus-300w-tasinabilir-guc-kaynagi-power-station-pm-HBC0000CPS3S7", "mult": "", "name": "Orbus OPS-300 (Li-ion)", "note": "", "price": 12000, "qa": 6, "rating": 4.9, "recentDays": 60, "recentRev": "", "rev": 11}, "r-tr-19": {"badge": "", "badgeDays": "", "cart": "", "ch": "Trendyol", "date": "", "fav": "1600", "grp": "muadil", "inc": true, "link": "https://www.trendyol.com/pd/cata/ct-4041-etna-tasinabilir-guc-kaynagi-300w-p-1128318620", "mult": "0.4", "name": "Cata CT-4041 Etna", "note": "Çarpan azaltıldı. Fazla satış olduğunu düşünmüyorum.", "price": "5700", "qa": "156", "rating": "3.7", "recentDays": "60", "recentRev": "3", "rev": "15"}, "r-tr-2": {"badge": "", "badgeDays": "", "cart": "", "ch": "Vatan", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.vatanbilgisayar.com/anker-solix-c300x-288-wh-600w-tasinabilir-guc-kaynagi.html", "mult": "", "name": "Anker SOLIX C300X AC", "note": "", "price": 14999, "qa": "", "rating": 5, "recentDays": "360", "recentRev": "3", "rev": 3}, "r-tr-3": {"badge": "", "badgeDays": "", "cart": "", "ch": "MediaMarkt", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.mediamarkt.com.tr/tr/product/_anker-solix-c300x-dc-288-wh-600w-tasinabilir-guc-kaynagi-siyah-1247072.html?utm_source=new%20owned&utm_medium=ema-other%20email&utm_term=webshare&utm_campaign=webshare", "mult": "0.4", "name": "Anker SOLIX C300X AC", "note": "Çarpan azaltıldı. Fazla satış olduğunu düşünmüyorum.", "price": "14999", "qa": "", "rating": "4.4", "recentDays": "360", "recentRev": "7", "rev": "7"}, "r-tr-4": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon TR", "date": "", "fav": "", "grp": "muadil", "inc": false, "link": "", "mult": "", "name": "Anker SOLIX C300X AC", "note": "", "price": "", "qa": "", "rating": "", "recentDays": "360", "recentRev": "", "rev": ""}, "r-tr-5": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "2026-04", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/hyundai-thor-300-tasinabilir-guc-istasyonu-300w-saf-sinus-lifepo4-power-station-pm-HBC0000BMSVJU", "mult": "", "name": "Hyundai Thor 300", "note": "", "price": "11399", "qa": "17", "rating": 4.9, "recentDays": 180, "recentRev": 2, "rev": 8}, "r-tr-6": {"badge": "", "badgeDays": "", "cart": "", "ch": "Trendyol", "date": "", "fav": "383", "grp": "muadil", "inc": true, "link": "https://www.trendyol.com/hyundai/thor-300-tasinabilir-guc-istasyonu-300w-saf-sinus-lifepo4-power-station-p-1074221506", "mult": "", "name": "Hyundai Thor 300", "note": "", "price": "11576", "qa": "22", "rating": "3.7", "recentDays": "360", "recentRev": "1", "rev": "3"}, "r-tr-7": {"badge": "", "badgeDays": "", "cart": "", "ch": "n11", "date": "2026-04", "fav": "20", "grp": "muadil", "inc": true, "link": "https://www.n11.com/urun/hyundai-thor-300-tasinabilir-guc-istasyonu-300w-saf-sinus-lifepo4-power-station-116097947", "mult": "", "name": "Hyundai Thor 300", "note": "", "price": "14445", "qa": "", "rating": 5, "recentDays": "360", "recentRev": "1", "rev": 1}, "r-tr-8": {"badge": "", "badgeDays": "", "cart": "", "ch": "Teknosa", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.teknosa.com/hyundai-thor-300-tasinabilir-guc-istasyonu-300w-saf-sinus-lifepo4-power-station-p-784958427", "mult": "", "name": "Hyundai Thor 300", "note": "", "price": "13161", "qa": "", "rating": "", "recentDays": "360", "recentRev": "", "rev": ""}, "r-tr-9": {"badge": "", "badgeDays": "", "cart": "", "ch": "Diğer", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.koctas.com.tr/hyundai-thor-300-tasinabilir-guc-istasyonu-300w-saf-sinus-lifepo4-power-station/p/5003034465", "mult": "0.5", "name": "Hyundai Thor 300", "note": "Çarpan azaltıldı. Fazla satış olduğunu düşünmüyorum.", "price": "15042", "qa": "", "rating": 4, "recentDays": "180", "recentRev": "1", "rev": "1"}, "rmw7yfkve2bsb": {"badge": "", "badgeDays": "", "cart": "", "ch": "Trendyol", "date": "", "fav": "796", "grp": "hacim", "inc": true, "link": "https://www.trendyol.com/anker/solix-522-320wh-300w-a1721-p-873598087", "mult": "0.2", "name": "Anker Solix 522 320wh 300w-a1721", "note": "Mayıstan beri hiç yorum yok", "price": "17500", "qa": "52", "rating": "4.2", "recentDays": "360", "recentRev": "1", "rev": "16"}}, "tpl": "tr"}, "us": {"channels": ["Amazon US", "Walmart", "Best Buy", "Marka sitesi", "Diğer"], "cur": "$", "id": "us", "label": "ABD (Amazon)", "p": {"ads": "1", "autoCal": true, "badgeUp": 1.3, "cartMult": 0.7, "coverage": 50, "defaultAge": 12, "elast": 1.2, "favConv": 8, "growth": 10, "ourPrice": 199, "pathFrom": "sharePess", "pathHold": 2, "pathMonths": 4, "pathOn": true, "pathTo": "shareOpt", "priceOn": true, "ramp": 6, "rate": 1.5, "recentPriority": 50, "salesPerQ": 15, "season": true, "seasonPreset": "usGuc", "seasonV": [0.788, 0.788, 0.834, 0.88, 0.927, 1.019, 1.066, 1.066, 1.019, 0.927, 1.297, 1.39], "shareBase": 1, "shareOpt": 2, "sharePess": 0.5, "start": "2027-03", "techK": 30, "techOn": false}, "rowOrder": ["r-us-0", "r-us-1", "r-us-2", "r-us-3", "r-us-4", "r-us-5", "r-us-6"], "rows": {"r-us-0": {"badge": 500, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.amazon.com/clp/B0DBLJRRPW", "mult": "", "name": "Anker SOLIX C300 + 60W panel", "note": "", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-us-1": {"badge": 100, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.amazon.com/ecoflow-river/s?k=ecoflow+river", "mult": "", "name": "EcoFlow River 3 (245Wh)", "note": "", "price": 239, "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-us-2": {"badge": 100, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.amazon.com/ecoflow-river-portable-power-station/s?k=ecoflow+river+portable+power+station", "mult": "", "name": "EcoFlow River 2 (256Wh)", "note": "", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-us-3": {"badge": 200, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.amazon.com/river-3-power-station/s?k=river+3+power+station", "mult": "", "name": "EcoFlow River 2 240 (243Wh)", "note": "", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-us-4": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "", "mult": "", "name": "Jackery Explorer 240 v2", "note": "", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-us-5": {"badge": 2000, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.amazon.com/Anker-Portable-Generator-Traveling-Emergencies/dp/B0D62PMB3R", "mult": "", "name": "Anker SOLIX C300 DC (AC prizsiz)", "note": "", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-us-6": {"badge": 7000, "badgeDays": 30, "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "hacim", "inc": false, "link": "https://www.amazon.com/ecoflow-portable-power-station/s?k=ecoflow+portable+power+station", "mult": "", "name": "Jackery Explorer 300 (doğrulanmalı)", "note": "", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}}, "tpl": "us"}}, "name": "Marxlow 300W Pro", "specs": {"attrOrder": ["cap", "cont", "peak", "chem", "cycles", "usbc", "solar", "wl", "ups", "app", "weight", "warranty"], "attrs": {"app": {"dir": "none", "name": "Uygulama / bağlantı", "tol": 0, "unit": "", "w": 1}, "cap": {"dir": "none", "name": "Kapasite", "tol": 3, "unit": "Wh", "w": 3}, "chem": {"dir": "none", "name": "Pil tipi", "tol": 0, "unit": "", "w": 3}, "cont": {"dir": "none", "name": "Sürekli AC güç", "tol": 5, "unit": "W", "w": 3}, "cycles": {"dir": "none", "name": "Döngü ömrü", "tol": 10, "unit": "döngü", "w": 2}, "peak": {"dir": "none", "name": "Tepe güç", "tol": 10, "unit": "W", "w": 1}, "solar": {"dir": "none", "name": "Güneş paneli girişi", "tol": 10, "unit": "W", "w": 1}, "ups": {"dir": "none", "name": "UPS / EPS", "tol": 0, "unit": "", "w": 2}, "usbc": {"dir": "none", "name": "USB-C maks. güç", "tol": 10, "unit": "W", "w": 2}, "warranty": {"dir": "none", "name": "Garanti", "tol": 0, "unit": "yıl", "w": 2}, "weight": {"dir": "none", "name": "Ağırlık", "tol": 10, "unit": "kg", "w": 1}, "wl": {"dir": "none", "name": "Kablosuz şarj", "tol": 0, "unit": "", "w": 1}}, "marks": {"k_Anker%20521%20%2F%20522%20(ortak%20sayfa)|chem": "y", "k_Anker%20SOLIX%20C300X%20AC|app": "y", "k_Anker%20SOLIX%20C300X%20AC|cap": "r", "k_Anker%20SOLIX%20C300X%20AC|chem": "y", "k_Anker%20SOLIX%20C300X%20AC|ups": "y", "k_Anker%20SOLIX%20C300X%20AC|warranty": "y", "k_Anker%20SOLIX%20C300X%20AC|wl": "g", "k_EcoFlow%20River%203%20UPS|cap": "g", "k_EcoFlow%20River%203%20UPS|chem": "y", "k_EcoFlow%20River%203%20UPS|ups": "y", "k_Ezviz%20PS300%20(Li-ion)|chem": "g", "k_Hyundai%20Thor%20300|cap": "g", "k_Hyundai%20Thor%20300|chem": "y", "k_Hyundai%20Thor%20300|wl": "g", "k_Jackery%20Explorer%20240%20v2|chem": "y", "k_Orbus%20OPS-300%20(Li-ion)|chem": "g"}, "vals": {"k_%40marxlow": {"app": "Wi-Fi + Bluetooth", "cap": 256, "chem": "LiFePO4", "cont": 300, "peak": 600, "solar": 140, "ups": "EPS", "usbc": 65, "warranty": "2", "wl": "Var"}, "k_Anker%20521%20%2F%20522%20(ortak%20sayfa)": {"cap": "256 / 320", "chem": "LiFePO4", "cont": "200 / 300"}, "k_Anker%20SOLIX%20C300%20%2B%2060W%20panel": {"cap": 288, "chem": "LiFePO4", "usbc": 140}, "k_Anker%20SOLIX%20C300%20DC%20(AC%20prizsiz)": {"cap": 288, "chem": "LiFePO4"}, "k_Anker%20SOLIX%20C300X%20AC": {"app": "Wi-Fi + Bluetooth", "cap": 288, "chem": "LiFePO4", "cont": 300, "cycles": 3000, "peak": 600, "solar": 100, "ups": "UPS (10 ms)", "usbc": 140, "warranty": 2, "weight": 4.1, "wl": "Yok"}, "k_Antfea%20S300": {"cap": 288, "cont": 300}, "k_Cata%20CT-4041%20Etna": {"cap": 198.4, "cont": 300}, "k_EcoFlow%20River%202%20(256Wh)": {"cap": 256, "chem": "LiFePO4", "cont": 300}, "k_EcoFlow%20River%202%20240%20(243Wh)": {"cap": 243, "chem": "LiFePO4", "cont": 300}, "k_EcoFlow%20River%203%20(245Wh)": {"cap": 245, "chem": "LiFePO4"}, "k_EcoFlow%20River%203%20UPS": {"cap": 245, "chem": "LiFePO4", "cont": 300, "peak": 600, "ups": "UPS (10 ms)"}, "k_Ezviz%20PS300%20(Li-ion)": {"cap": 313, "chem": "Li-ion", "cont": 300, "cycles": 1000, "weight": 3.6}, "k_Hyundai%20Thor%20300": {"app": "Smart Life", "cap": 204.8, "chem": "LiFePO4", "cont": 300, "cycles": 3000, "peak": 500, "solar": 120, "usbc": 65, "warranty": 2, "wl": "Yok"}, "k_Jackery%20Explorer%20240%20v2": {"app": "Wi-Fi + Bluetooth", "cap": 256, "chem": "LiFePO4", "cont": 300, "cycles": 3000, "usbc": 100, "weight": 3.5}, "k_Jackery%20Explorer%20300%20(do%C4%9Frulanmal%C4%B1)": {"cap": 292}, "k_Orbus%20OPS-300%20(Li-ion)": {"cap": 296, "chem": "Li-ion", "cont": 300}}}}, "marxlow-1800w-am1j": {"id": "marxlow-1800w-am1j", "mOrder": ["tr", "us"], "markets": {"tr": {"channels": ["Hepsiburada", "Trendyol", "Amazon TR", "n11", "MediaMarkt", "Teknosa", "Vatan", "Diğer"], "cur": "TL", "label": "Türkiye", "p": {"ads": "1", "autoCal": true, "badgeUp": 1.3, "cartMult": 0.5, "coverage": 70, "defaultAge": 18, "elast": 1.2, "favConv": 2, "growth": 10, "ourPrice": 31999, "pathFrom": "sharePess", "pathHold": 2, "pathMonths": 4, "pathOn": true, "pathTo": "shareOpt", "priceOn": true, "ramp": 4, "rate": 5.5, "recentPriority": 40, "salesPerQ": 30, "salesPerQMan": false, "season": true, "seasonPreset": "trGuc", "seasonV": [1.048, 0.952, 0.857, 0.905, 1, 1.095, 1.095, 1.048, 0.857, 0.905, 1.143, 1.095], "shareBase": 6, "shareOpt": 12, "sharePess": 3, "start": "2026-12", "techK": 15, "techOn": false}, "rowOrder": ["r-tr-1", "r-tr-2", "r-tr-8", "rmw80niy8i5u8", "rmw80slzd4x5b", "r-tr-4", "rgobo1794165401a", "rgobo1794165401b", "rgobo1794165401c", "r-tr-5", "r-tr-6", "r-tr-0", "rmw7zte1kq3by", "rmw7zuignmflk", "rmw7zx33nde4o", "r-tr-3", "r-tr-9", "r-tr-10", "r-tr-11", "r-tr-12", "r-tr-13", "r-tr-14", "rmw80zmw5wpi9", "rmw81ambgfqfq"], "rows": {"r-tr-0": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/anker-solix-c1000-gen-2-1-024-wh-3-000w-tepe-gucu-tasinabilir-guc-kaynagi-ev-ve-dis-mekan-icin-lifepo4-pilli-ups-guc-istasyonu-a1763-pm-HBC0000B043RY", "mult": "", "name": "Anker SOLIX C1000 Gen 2", "note": "", "price": 39999, "qa": "", "rating": 4.4, "recentDays": "90", "recentRev": "22", "rev": 45}, "r-tr-1": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/ecoflow-delta-3-plus-tasinabilir-guc-kaynagi-1024wh-kapasite-4x1800w-x-boost-2400w-cikis-pm-HBC00008IUMDN", "mult": "", "name": "EcoFlow DELTA 3 Plus", "note": "", "price": 45999, "qa": "38", "rating": 4.4, "recentDays": "90", "recentRev": "1", "rev": 13}, "r-tr-10": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/x-level-tasinabilir-guc-istasyonu-xc-80857155-b5004", "mult": "", "name": "X-Level X-PowerEnjoy 1024Wh", "note": "Pil tipi doğrulanmalı", "price": 22005, "qa": "", "rating": 3.7, "recentDays": 60, "recentRev": "", "rev": 10}, "r-tr-11": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/ecoflow-delta-3-1500-guc-kaynagi-1536wh-eu-pm-HBC0000C11N03", "mult": "", "name": "EcoFlow DELTA 3 1500 (1536Wh)", "note": "Aynı güç, daha büyük kapasite", "price": 65999, "qa": "", "rating": 4.7, "recentDays": 60, "recentRev": "", "rev": 16}, "r-tr-12": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/anker-solix-f1500-powerhouse-1536-wh-1800-w-tasinabilir-guc-kaynagi-a1772-pm-HBC0000777L5A", "mult": "", "name": "Anker SOLIX F1500 (1536Wh)", "note": "Aynı güç, daha büyük kapasite", "price": 57782, "qa": "", "rating": 5, "recentDays": 60, "recentRev": "", "rev": 9}, "r-tr-13": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "hacim", "inc": false, "link": "https://www.hepsiburada.com/anker-solix-767-powerhouse-2400w-ganprime-tasinabilir-guc-kaynagi-2048wh-2400w-ev-karavan-ve-dis-mekan-kullanimi-icin-lifepo4-pilli-jenerator-a1780-anker-turkiye-garantili-pm-HBC00004LZ57L", "mult": "", "name": "Anker SOLIX 767 (2048Wh, 2400W)", "note": "Üst sınıf; dahil edilirse hacmi büyük ölçüde şişirir", "price": 69999, "qa": "", "rating": 4.4, "recentDays": 60, "recentRev": "", "rev": 110}, "r-tr-14": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "hacim", "inc": false, "link": "https://www.hepsiburada.com/ecoflow-river-2-pro-tasinabilir-guc-kaynagi-768wh-kapasite-3x800w-x-boost-1600w-cikis-pm-HBC000049YWRC", "mult": "", "name": "EcoFlow RIVER 2 Pro (768Wh, 800W)", "note": "Alt sınıf; dahil edilirse hacmi büyük ölçüde şişirir", "price": 27999, "qa": "", "rating": 4.6, "recentDays": 60, "recentRev": "", "rev": 221}, "r-tr-2": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/ecoflow-delta-3-guc-kaynagi-1024wh-eu-pm-HBC0000I0SKNU", "mult": "", "name": "EcoFlow DELTA 3", "note": "", "price": 39999, "qa": "2", "rating": 5, "recentDays": "60", "recentRev": "1", "rev": 1}, "r-tr-3": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.hepsiburada.com/hyundai-thor-1800-tasinabilir-guc-istasyonu-1229wh-ev-karavan-ve-dis-mekan-kullanimi-lifepo4-batarya-pm-HBC000075BRZ7", "mult": "", "name": "Hyundai Thor 1800", "note": "", "price": 47753, "qa": "", "rating": 3, "recentDays": 60, "recentRev": "", "rev": 4}, "r-tr-4": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": false, "link": "https://www.hepsiburada.com/initiplentropyenergy", "mult": "", "name": "Initial Entropy Energy P1800", "note": "Mağaza linki; ürün sayfasının yorum sayısını girin", "price": 44999, "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-tr-5": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": false, "link": "https://www.hepsiburada.com/dji-tasinabilir-guc-istasyonu-xc-80857155-b34603", "mult": "", "name": "DJI Power 1000", "note": "Marka sayfası linki; ürün linki ve verileri girilmeli", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-tr-6": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon TR", "date": "", "fav": "", "grp": "muadil", "inc": false, "link": "https://www.amazon.com.tr/ta%C5%9F%C4%B1nabilir-guc-istasyonu/s?k=ta%C5%9F%C4%B1nabilir+guc+istasyonu", "mult": "", "name": "PowerMax 1800SE", "note": "Amazon TR arama sonucundan; ürün linki girilmeli", "price": "", "qa": "", "rating": 4.8, "recentDays": 60, "recentRev": "", "rev": 11}, "r-tr-7": null, "r-tr-8": {"badge": "", "badgeDays": "", "cart": "", "ch": "Trendyol", "date": "", "fav": "321", "grp": "muadil", "inc": true, "link": "https://www.trendyol.com/ecoflow/delta-3-plus-tasinabilir-guc-kaynagi-1024wh-kapasite-ecoflow-turkiye-boemar-garantili-p-927262940", "mult": "", "name": "EcoFlow DELTA 3 Plus", "note": "", "price": "48999", "qa": "21", "rating": "5", "recentDays": "360", "recentRev": "", "rev": "1"}, "r-tr-9": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "hacim", "inc": true, "link": "https://www.hepsiburada.com/ugreen-powerroam-tasinabilir-guc-kaynagi-1024wh-kapasite-1200w-u-turbo-2500w-cikis-gucu-ev-karavan-ve-dis-mekan-kullanimi-icin-lifepo4-bataryali-solar-jenerator-ugreen-turkiye-garantili-pm-HBC0000578NAP", "mult": "", "name": "Ugreen PowerRoam 1024Wh (1200W)", "note": "Aynı kapasite, daha düşük çıkış gücü (1200W)", "price": "", "qa": "", "rating": 4.8, "recentDays": 60, "recentRev": "", "rev": 26}, "rgobo1794165401a": {"badge": "", "badgeDays": "", "cart": "", "ch": "Hepsiburada", "date": "", "fav": "", "grp": "muadil", "inc": false, "link": "https://www.hepsiburada.com/goboenergy", "mult": "", "name": "GoboEnergy P1800", "note": "Claude araştırması: HB mağazasında sepete özel %10 ile 35.500 TL (liste 39.445). Ürün linki, yorum ve soru sayıları girilmeli.", "price": 35500, "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "rgobo1794165401b": {"badge": "", "badgeDays": "", "cart": "", "ch": "n11", "date": "", "fav": "", "grp": "muadil", "inc": false, "link": "https://www.n11.com/arama?m=Goboenergy", "mult": "", "name": "GoboEnergy P1800", "note": "Claude araştırması: n11 arama sonucu. Ürün linki ve yorum sayısı girilmeli.", "price": 35178, "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "rgobo1794165401c": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon TR", "date": "", "fav": "", "grp": "muadil", "inc": false, "link": "https://www.amazon.com.tr/ta%C5%9F%C4%B1nabilir-guc-istasyonu/s?k=ta%C5%9F%C4%B1nabilir+guc+istasyonu", "mult": "", "name": "GoboEnergy P1800", "note": "Claude araştırması: Amazon TR arama sonucu. Ürün linki ve değerlendirme sayısı girilmeli.", "price": 36599, "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "rmw7zte1kq3by": {"badge": "", "badgeDays": "", "cart": "", "ch": "Teknosa", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.teknosa.com/anker-solix-c1000x-gen2-1024wh-2000w-a1763-tasinabilir-guc-kaynagi-p-100000063328", "mult": "", "name": "Anker SOLIX C1000 Gen 2", "note": "", "price": "39999", "qa": "", "rating": "", "recentDays": "360", "recentRev": "", "rev": ""}, "rmw7zuignmflk": {"badge": "", "badgeDays": "", "cart": "", "ch": "Trendyol", "date": "", "fav": "1100", "grp": "muadil", "inc": true, "link": "https://www.trendyol.com/anker/solix-c1000x-gen2-1024wh-2000w-a1763-p-1082132434", "mult": "0.6", "name": "Anker SOLIX C1000 Gen 2", "note": "", "price": "49999", "qa": "18", "rating": "4.5", "recentDays": 60, "recentRev": "2", "rev": "12"}, "rmw7zx33nde4o": {"badge": "", "badgeDays": "", "cart": "30", "ch": "Diğer", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.idefix.com/anker-solix-c1000-gen-2-2000-w-tasinabilir-guc-kaynagi-p-31926739", "mult": "0.3", "name": "Anker SOLIX C1000 Gen 2", "note": "", "price": "44199", "qa": "", "rating": "", "recentDays": "360", "recentRev": "", "rev": ""}, "rmw80niy8i5u8": {"badge": "", "badgeDays": "", "cart": "", "ch": "Diğer", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.koctas.com.tr/ecoflow-ecoflow-delta-3-plus-tasinabilir-guc-kaynagi-1024wh-kapasite-4x1800w-x-boost-2400w-cikis/p/5002911374?gclsrc=aw.ds&gad_source=1&gad_campaignid=20794789090&gclid=CjwKCAiA2MDXBhBUEiwAD-YB-wJ_LeBUrhhQiohcz9sIwtHFKiTijVB1ZhalWpsl0B3QYUxPZTGifRoCrJIQAvD_BwE", "mult": "", "name": "EcoFlow DELTA 3 Plus", "note": "", "price": "45999", "qa": "", "rating": "", "recentDays": "360", "recentRev": "", "rev": ""}, "rmw80slzd4x5b": {"badge": "", "badgeDays": "", "cart": "", "ch": "n11", "date": "", "fav": "90", "grp": "muadil", "inc": true, "link": "https://www.n11.com/urun/ecoflow-delta-3-plus-tasinabilir-guc-kaynagi-1024wh-kapasite-4x1800w-x-boost-2400w-cikis-75640207?magaza=ecoflowturkiye&gclsrc=aw.ds&gad_source=1&gad_campaignid=23247948427&gbraid=0AAAAADsJcV2VbLGz4abvnJfgrPa70P4lA&gclid=CjwKCAiA2MDXBhBUEiwAD-YB--C6h8KcPCeeQSRXpS4B0aBte1W6p3HAiX8VjgL4xKaxciznAKOiwxoCf8IQAvD_BwE", "mult": "", "name": "EcoFlow DELTA 3 Plus", "note": "", "price": "45999", "qa": "", "rating": "3.5", "recentDays": "180", "recentRev": "2", "rev": "3"}, "rmw80zmw5wpi9": {"badge": "", "badgeDays": "", "cart": "", "ch": "n11", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "https://www.n11.com/urun/hyundai-thor-1800-tasinabilir-guc-istasyonu-1229wh-ev-karavan-ve-dis-mekan-kullanimi-icin-lifepo4-batarya-60872191?magaza=eschirdavatbahce&gclsrc=aw.ds&gad_source=1&gad_campaignid=23247948427&gbraid=0AAAAADsJcV2VbLGz4abvnJfgrPa70P4lA&gclid=CjwKCAiA2MDXBhBUEiwAD-YB--N2VjuwwCZjspDzEXjBcGzgGu24-UUwAw9DQoYKwNvbpHjxiLWcQxoC4QMQAvD_BwE", "mult": "", "name": "Hyundai Thor 1800", "note": "", "price": "55728", "qa": "29", "rating": "4", "recentDays": "360", "recentRev": "", "rev": "1"}, "rmw81ambgfqfq": {"badge": "", "badgeDays": "", "cart": "", "ch": "Trendyol", "date": "", "fav": "603", "grp": "muadil", "inc": true, "link": "https://www.trendyol.com/hyundai/thor-1800-tasinabilir-guc-istasyonu-1229wh-ev-karavan-ve-dis-mekan-kullanimi-icin-lifepo4-batarya-p-866300848", "mult": "0.3", "name": "Hyundai Thor 1800", "note": "Trendini kaybetmiş gibi görünüyor.", "price": "43988", "qa": "70", "rating": "4.5", "recentDays": "180", "recentRev": "6", "rev": "15"}}, "tpl": "tr"}, "us": {"channels": ["Amazon US", "Walmart", "Best Buy", "Marka sitesi", "Diğer"], "cur": "$", "label": "ABD (Amazon)", "p": {"ads": "1", "autoCal": true, "badgeUp": 1.3, "cartMult": 0.7, "coverage": 50, "defaultAge": 12, "elast": 1.2, "favConv": 8, "growth": 10, "ourPrice": "", "pathFrom": "sharePess", "pathHold": 2, "pathMonths": 4, "pathOn": true, "pathTo": "shareOpt", "priceOn": true, "ramp": 6, "rate": 1.5, "recentPriority": 50, "salesPerQ": 15, "season": true, "seasonPreset": "usGuc", "seasonV": [0.788, 0.788, 0.834, 0.88, 0.927, 1.019, 1.066, 1.066, 1.019, 0.927, 1.297, 1.39], "shareBase": 1, "shareOpt": 2, "sharePess": 0.5, "start": "2027-03", "techK": 30, "techOn": false}, "rowOrder": ["r-us-0", "r-us-1", "r-us-2", "r-us-3", "r-us-4"], "rows": {"r-us-0": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon US", "date": "2023-09", "fav": "", "grp": "muadil", "inc": true, "link": "https://amazon.com/dp/B0B9XB57XM", "mult": "", "name": "EcoFlow DELTA 2", "note": "Yorum sayısı ve tarih ayna siteden; Amazon’da doğrulanmalı", "price": 399, "qa": "", "rating": 4.7, "recentDays": 60, "recentRev": "", "rev": 4642}, "r-us-1": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "", "mult": "", "name": "DJI Power 1000", "note": "", "price": 459, "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-us-2": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "", "mult": "", "name": "Anker SOLIX C1000", "note": "", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-us-3": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "", "mult": "", "name": "Jackery Explorer 1000 v2", "note": "", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}, "r-us-4": {"badge": "", "badgeDays": "", "cart": "", "ch": "Amazon US", "date": "", "fav": "", "grp": "muadil", "inc": true, "link": "", "mult": "", "name": "EcoFlow DELTA 3 Plus", "note": "", "price": "", "qa": "", "rating": "", "recentDays": 60, "recentRev": "", "rev": ""}}, "tpl": "us"}}, "name": "Marxlow 1800W Pro", "specs": {"attrOrder": ["cap", "cont", "peak", "chem", "cycles", "acchg", "usbc", "solar", "acn", "wl", "ups", "exp", "app", "weight", "warranty"], "attrs": {"acchg": {"dir": "high", "name": "AC şarj gücü", "tol": 10, "unit": "W", "w": 2}, "acn": {"dir": "high", "name": "AC priz sayısı", "tol": 0, "unit": "adet", "w": 1}, "app": {"dir": "none", "name": "Uygulama / bağlantı", "tol": 0, "unit": "", "w": 1}, "cap": {"dir": "high", "name": "Kapasite", "tol": 5, "unit": "Wh", "w": 3}, "chem": {"dir": "none", "name": "Pil tipi", "tol": 0, "unit": "", "w": 3}, "cont": {"dir": "high", "name": "Sürekli AC güç", "tol": 5, "unit": "W", "w": 3}, "cycles": {"dir": "high", "name": "Döngü ömrü", "tol": 10, "unit": "döngü", "w": 2}, "exp": {"dir": "none", "name": "Genişletilebilir batarya", "tol": 0, "unit": "", "w": 2}, "peak": {"dir": "high", "name": "Tepe güç", "tol": 10, "unit": "W", "w": 1}, "solar": {"dir": "high", "name": "Güneş paneli girişi", "tol": 10, "unit": "W", "w": 1}, "ups": {"dir": "none", "name": "UPS / EPS", "tol": 0, "unit": "", "w": 2}, "usbc": {"dir": "high", "name": "USB-C maks. güç", "tol": 10, "unit": "W", "w": 2}, "warranty": {"dir": "high", "name": "Garanti", "tol": 0, "unit": "yıl", "w": 2}, "weight": {"dir": "low", "name": "Ağırlık", "tol": 10, "unit": "kg", "w": 1}, "wl": {"dir": "none", "name": "Kablosuz şarj", "tol": 0, "unit": "", "w": 1}}, "marks": {"k_Anker%20SOLIX%20C1000%20Gen%202|ups": "y", "k_Anker%20SOLIX%20C1000%20Gen%202|wl": "g", "k_DJI%20Power%201000|ups": "y", "k_DJI%20Power%201000|wl": "g", "k_EcoFlow%20DELTA%202|wl": "g", "k_EcoFlow%20DELTA%203%20Plus|wl": "g"}, "vals": {"k_%40marxlow": {"acchg": 1500, "acn": 4, "app": "Wi-Fi + Bluetooth (Smart Life)", "cap": 1024, "chem": "LiFePO4", "cont": 1800, "cycles": 4000, "exp": "Var (6 ek batarya)", "peak": 3000, "solar": 800, "ups": "EPS (~10 ms)", "usbc": 140, "weight": 11.6, "wl": "Var (Qi2.2, 25W)"}, "k_Anker%20SOLIX%20767%20(2048Wh%2C%202400W)": {"cap": 2048, "chem": "LiFePO4", "cont": 2400}, "k_Anker%20SOLIX%20C1000%20Gen%202": {"cap": 1024, "chem": "LiFePO4", "cont": 2000, "peak": 3000, "ups": "UPS"}, "k_Anker%20SOLIX%20F1500%20(1536Wh)": {"cap": 1536, "chem": "LiFePO4", "cont": 1800}, "k_DJI%20Power%201000": {"cap": 1024, "chem": "LiFePO4", "cont": 2200, "cycles": 4000, "peak": 2600, "ups": "UPS", "usbc": 140, "weight": 13}, "k_EcoFlow%20DELTA%202": {"acn": 4, "cap": 1024, "chem": "LiFePO4", "cont": 1800, "cycles": 3000, "exp": "Var", "peak": 2700, "weight": 12}, "k_EcoFlow%20DELTA%203": {"cap": 1024, "chem": "LiFePO4", "cont": 1800, "peak": 2200}, "k_EcoFlow%20DELTA%203%201500%20(1536Wh)": {"cap": 1536, "chem": "LiFePO4", "cont": 1800, "peak": 2400}, "k_EcoFlow%20DELTA%203%20Plus": {"acn": 4, "cap": 1024, "chem": "LiFePO4", "cont": 1800, "peak": 3600}, "k_EcoFlow%20RIVER%202%20Pro%20(768Wh%2C%20800W)": {"cap": 768, "chem": "LiFePO4", "cont": 800, "peak": 1600}, "k_GoboEnergy%20P1800": {"acchg": 1200, "app": "Wi-Fi + Bluetooth", "cap": 1024, "chem": "LiFePO4", "cont": 1800, "cycles": 4000, "peak": 3600, "solar": 500, "ups": "EPS (10 ms)", "usbc": 100}, "k_Hyundai%20Thor%201800": {"cap": 1229, "chem": "LiFePO4"}, "k_Initial%20Entropy%20Energy%20P1800": {"app": "Wi-Fi + Bluetooth", "cap": 1024, "chem": "LiFePO4", "cont": 1800, "cycles": 4000, "peak": 3600}, "k_PowerMax%201800SE": {"cap": 1024, "chem": "LiFePO4", "cont": 1800, "peak": 3600, "usbc": 100}, "k_Ugreen%20PowerRoam%201024Wh%20(1200W)": {"cap": 1024, "chem": "LiFePO4", "cont": 1200, "cycles": 3000, "peak": 2500}, "k_X-Level%20X-PowerEnjoy%201024Wh": {"cap": 1024}}}}}};
+function defaultApp(){const products={}; START.order.forEach(id=>products[id]=normalize(fromServer(START.products[id]))); return {order:START.order.slice(),products,ui:{pid:START.order[0],tab:"tr"}};}
+let HAD_LOCAL=false;
+try{const raw=localStorage.getItem(KEY); APP=raw?JSON.parse(raw):null; HAD_LOCAL=!!(APP&&APP.products);}catch(e){APP=null;}
+if(!APP||!APP.products||!APP.order){
+  APP=defaultApp();
+  // eski (tek ürünlü) yerel veri varsa ilk ürüne taşı
+  try{const old=null; if(old&&old.tr&&old.us){const P=APP.products[APP.order[0]];
+    ["tr","us"].forEach(mid=>{P.markets[mid].rows=old[mid].rows.map(r=>{const x=Object.assign({},r);delete x.wh;return x;}); const op=Object.assign({},old[mid].p); delete op.ourWh; Object.assign(P.markets[mid].p,op);}); normalize(P);}}catch(e){}
+}
+APP.ui=APP.ui||{pid:APP.order[0],tab:"tr"};
+let newDataPending=false;
+if(!APP.dataVersion) APP.dataVersion=DATA_VERSION; else if(APP.dataVersion!==DATA_VERSION) newDataPending=true;
+Object.values(APP.products).forEach(normalize);
+APP.order=APP.order.filter(id=>APP.products[id]);
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(APP)); if(typeof base==="object"&&base&&Object.keys(base).length) localStorage.setItem(KEY+"-base",JSON.stringify(base));}catch(e){}}
+const curP=()=>APP.products[APP.ui.pid];
+
+/* ---------- hesap ---------- */
+function monthsSince(d){
+  const s=String(d||"").trim(); let y,mo,m;
+  if((m=/^(\d{4})[-\/.](\d{1,2})(?:[-\/.]\d{1,2})?$/.exec(s))){y=+m[1];mo=+m[2];}
+  else if((m=/^(?:\d{1,2}[-\/.])?(\d{1,2})[-\/.](\d{4})$/.exec(s))){y=+m[2];mo=+m[1];}
+  else if((m=/^(\d{4})$/.exec(s))){y=+m[1];mo=6;}
+  if(!y||!(mo>=1&&mo<=12)) return NaN;
+  return Math.max(1,nowIdx-(y*12+(mo-1)));
+}
+function ratingAdj(r){r=num(r); if(!isFinite(r)) return 1; return r>=4.5?1:r>=4?0.9:0.75;}
+function badgeMonthly(r){const b=num(r.badge),d=num(r.badgeDays)||30; return b>0?b*30/d:NaN;}
+function recentMonthly(r){return hasNum(r.recentRev)?num(r.recentRev)*30/(num(r.recentDays)||60):NaN;}
+function ageOf(M,r){const m=monthsSince(r.date); return m>0?{m,est:false}:{m:Math.max(1,num(M.p.defaultAge)||12),est:true};}
+function calibrate(M){
+  const p=M.p, out={rate:p.rate/100,spq:num(p.salesPerQ)||0,fav:(num(p.favConv)||0)/100,cart:num(p.cartMult)||0,src:{}};
+  if(!p.autoCal) return out;
+  const rows=M.rows.filter(r=>r.inc);
+  const revRate=r=>{if(num(r.recentRev)>=5) return recentMonthly(r); const m=monthsSince(r.date),rev=num(r.rev); return (rev>=20&&m>0)?rev/m:NaN;};
+  const rr=[]; rows.forEach(r=>{const v=revRate(r),bm=badgeMonthly(r); if(isFinite(v)&&bm>0) rr.push(v*ratingAdj(r.rating)/(bm*(num(p.badgeUp)||1)));});
+  if(rr.length&&!p.rateMan){out.rate=Math.min(0.15,Math.max(0.003,med(rr)));out.src.rate=rr.length;}
+  const q=[],fv=[],ct=[];
+  rows.forEach(r=>{const v=revRate(r); if(!isFinite(v)) return; const b=v/out.rate*ratingAdj(r.rating), m=monthsSince(r.date);
+    const qa=num(r.qa),fav=num(r.fav),cart=num(r.cart);
+    if(qa>=10&&m>0) q.push(b/(qa/m)); if(fav>=10&&m>0) fv.push(b/(fav/m)); if(cart>0) ct.push(b/cart);});
+  if(q.length&&!p.salesPerQMan){out.spq=med(q);out.src.spq=q.length;}
+  if(fv.length&&!p.favConvMan){out.fav=Math.min(1,med(fv));out.src.fav=fv.length;}
+  if(ct.length&&!p.cartMultMan){out.cart=med(ct);out.src.cart=ct.length;}
+  return out;
+}
+function rowCalc(M,r,cal){
+  const p=M.p, age=ageOf(M,r), m=age.m, ew=age.est?0.5:1, sig=[];
+  const rev=num(r.rev), rm=recentMonthly(r), qa=num(r.qa), bm=badgeMonthly(r), fav=num(r.fav), cart=num(r.cart);
+  let usedEst=false;
+  if(isFinite(rm)) sig.push([rm/cal.rate*ratingAdj(r.rating),0.6+0.6*Math.min(1,num(r.recentRev)/10),"Son dönem yorum"]);
+  else if(hasNum(r.rev)&&rev>=0){sig.push([rev/m/cal.rate*ratingAdj(r.rating),(0.5+0.5*Math.min(1,rev/30))*ew,age.est?"Yorum (tahmini yaş)":"Yorum"]); usedEst=usedEst||age.est;}
+  const cw=isFinite(rm)?Math.max(0,1-(hasNum(p.recentPriority)?num(p.recentPriority):50)/100):1;
+  if(qa>0&&cal.spq>0&&cw>0){sig.push([qa/m*cal.spq,(0.2+0.6*Math.min(1,qa/30))*ew*cw,age.est?"Soru (tahmini yaş)":"Soru"]); usedEst=usedEst||age.est;}
+  if(bm>0) sig.push([bm*(num(p.badgeUp)||1),2,"Rozet"]);
+  if(fav>0&&cal.fav>0&&cw>0){sig.push([fav/m*cal.fav,0.5*ew*cw,age.est?"Favori (tahmini yaş)":"Favori"]); usedEst=usedEst||age.est;}
+  if(cart>0&&cal.cart>0) sig.push([cart*cal.cart,0.5,"Sepet"]);
+  // İlgi sinyali sınırı: soru ve favori yorumla kanıtlanan satışın çok üstündeyse ağırlığı kısılır
+  const icap=hasNum(p.interestCap)?num(p.interestCap):5;
+  const revSig=sig.find(s=>/^Yorum|^Son dönem yorum/.test(s[2]));
+  if(icap>0&&revSig){ const base=Math.max(revSig[0],0.5);
+    sig.forEach(s=>{ if(/^Soru|^Favori/.test(s[2])&&s[0]>icap*base){ s[1]*=icap*base/s[0]; s[2]+=" (kısıldı)"; } }); }
+  let trend="";
+  if(isFinite(rm)&&rev>0){const ratio=rm/(rev/m); trend=(ratio>1.3?"↑ Yükselişte":ratio<0.7?"↓ Düşüşte":"→ Sabit")+(age.est?" (?)":"");}
+  if(!sig.length) return {months:m,est:age.est,units:NaN,src:"",conf:"na",tip:"",trend,edited:false};
+  const w=sig.reduce((a,s)=>a+s[1],0), units=sig.reduce((a,s)=>a+s[0]*s[1],0)/w;
+  const vals=sig.map(s=>s[0]).filter(v=>v>0), spread=vals.length>1?Math.max(...vals)/Math.max(1e-9,Math.min(...vals)):1;
+  const strongBase=isFinite(rm)||bm>0; let conf;
+  if(sig.length>=2&&spread>3) conf="clash"; else if(usedEst&&!strongBase) conf="estdate";
+  else if(sig.length>=2&&(spread<=2||strongBase)) conf="strong"; else if(sig.length>=2||rev>=30||strongBase) conf="ok"; else conf="lo";
+  const mult=num(r.mult), edited=hasNum(r.mult)&&mult>=0&&mult!==1, adj=edited?units*mult:units;
+  return {months:m,est:age.est,units:adj,edited,conf,trend,src:sig.map(s=>s[2]).join(" + ")+(edited?` × ${fmt1(mult)}`:""),
+    tip:sig.map(s=>`${s[2]}: ${fmt(s[0])}/ay (ağırlık ${fmt1(s[1])})`).join(" · ")+(edited?` · Harmanlanmış ${fmt(units)}/ay × editör çarpanı ${fmt1(mult)} = ${fmt(adj)}/ay`:"")+(r.note?` · Şerh: ${r.note}`:"")};
+}
+/* teknik kıyas */
+function specMark(P,attr,name){
+  const man=P.specs.marks[vkey(name)+"|"+attr.id]; if(man) return man;
+  if(attr.dir==="none") return "";
+  const o=num((P.specs.vals[vkey(OUR)]||{})[attr.id]), v=num((P.specs.vals[vkey(name)]||{})[attr.id]);
+  if(!isFinite(o)||!isFinite(v)||o===0) return "";
+  let d=(v-o)/Math.abs(o)*100; if(attr.dir==="low") d=-d;
+  const tol=num(attr.tol); return Math.abs(d)<=(isFinite(tol)?tol:0)?"y":d>0?"r":"g";
+}
+function techScoreOf(P,name){let s=0,w=0; P.specs.attrs.forEach(a=>{const m=specMark(P,a,name); if(!m) return; const wt=num(a.w)||1; w+=wt; s+=wt*(m==="g"?1:m==="r"?-1:0);}); return w?s/w*100:NaN;}
+function compute(P,mid){
+  const M=P.markets[mid], p=M.p, cal=calibrate(M), cov=(num(p.coverage)||100)/100;
+  const calcs=M.rows.map(r=>rowCalc(M,r,cal)), byProd={}, prices=[], confN={};
+  M.rows.forEach((r,i)=>{const c=calcs[i]; if(!r.inc) return;
+    confN[c.conf]=(confN[c.conf]||0)+1; if(c.edited) confN.edited=(confN.edited||0)+1;
+    const name=(r.name||"").trim()||"(adsız)", e=byProd[name]=byProd[name]||{u:0,grp:r.grp,rs:[],trend:""};
+    if(isFinite(c.units)) e.u+=c.units; if(isFinite(num(r.rating))) e.rs.push(num(r.rating)); if(c.trend&&!e.trend) e.trend=c.trend;
+    if(r.grp==="muadil"&&num(r.price)>0) prices.push(num(r.price));});
+  const measured=Object.values(byProd).reduce((a,b)=>a+b.u,0), muadilU=Object.values(byProd).filter(b=>b.grp==="muadil").reduce((a,b)=>a+b.u,0);
+  const market=measured/cov, list=Object.entries(byProd).filter(([,b])=>b.u>0).sort((a,b)=>b[1].u-a[1].u);
+  const avgPrice=prices.length?prices.reduce((a,b)=>a+b,0)/prices.length:NaN, our=num(p.ourPrice);
+  let pf=1; if(p.priceOn&&isFinite(avgPrice)&&our>0) pf=Math.min(2,Math.max(0.5,Math.pow(avgPrice/our,num(p.elast)||0)));
+  const comps=[...new Set(M.rows.filter(r=>r.inc&&r.grp==="muadil").map(r=>(r.name||"").trim()).filter(Boolean))];
+  const scores=comps.map(n=>techScoreOf(P,n)).filter(isFinite), tech=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:NaN;
+  let tf=1; if(p.techOn&&isFinite(tech)) tf=Math.min(1.5,Math.max(0.5,1+(num(p.techK)||0)/100*tech/100));
+  const ads=num(p.ads)||1, sh=k=>(num(p[k])||0)/100*pf*tf*ads;
+  const mature={pess:market*sh("sharePess"),base:market*sh("shareBase"),opt:market*sh("shareOpt")};
+  let [y,mo]=String(p.start||"").split("-").map(Number); if(!(y>2000)||!(mo>=1&&mo<=12)){y=NOW.getFullYear();mo=NOW.getMonth()+2;if(mo>12){mo=1;y++;}}
+  const ramp=Math.max(1,Math.round(num(p.ramp)||1)), pathOn=!!p.pathOn, pA=sh(p.pathFrom||"sharePess"), pB=sh(p.pathTo||"shareOpt"), hold=Math.max(0,Math.round(num(p.pathHold)||0)), plen=Math.max(1,Math.round(num(p.pathMonths)||1));
+  const months=[], sv=(p.seasonV||[]).map(x=>num(x)||0), sMean=(sv.reduce((a,b)=>a+b,0)/12)||1, gr=hasNum(p.growth)?num(p.growth):0;
+  for(let i=0;i<12;i++){const mI=(mo-1+i)%12, yr=y+Math.floor((mo-1+i)/12);
+    const f=(ramp<=1?1:Math.min(1,0.3+0.7*i/(ramp-1)))*(p.season?(num(p.seasonV[mI])||0)/sMean:1)*Math.pow(1+gr/100,((y*12+mo-1+i)-nowIdx)/12), ps=i<hold?pA:pA+(pB-pA)*Math.min(1,(i-hold+1)/plen);
+    months.push({label:MONTHS[mI]+" "+yr,short:MONTHS[mI].slice(0,3),pess:mature.pess*f,base:mature.base*f,opt:mature.opt*f,path:pathOn?market*ps*f:NaN});}
+  const wt=k=>Math.max(0,hasNum(p[k])?num(p[k]):0), W={pess:wt("wPess"),base:wt("wBase"),opt:wt("wOpt"),path:pathOn?wt("wPath"):0}, wsum=W.pess+W.base+W.opt+W.path;
+  months.forEach(r=>{r.karma=wsum>0?(r.pess*W.pess+r.base*W.base+r.opt*W.opt+(pathOn?r.path*W.path:0))/wsum:r.base;});
+  const wPct={}; Object.keys(W).forEach(k=>wPct[k]=wsum>0?W[k]/wsum*100:(k==="base"?100:0));
+  const tot=k=>months.reduce((a,r)=>a+r[k],0);
+  return {M,cal,calcs,byProd,list,measured,muadil:muadilU/cov,market,mature,months,tB:tot("base"),tP:tot("pess"),tO:tot("opt"),tPath:pathOn?tot("path"):NaN,tK:tot("karma"),wPct,pathOn,price:our,avgPrice,pf,tech,tf,confN};
+}
+/* ---------- arayüz: gezinme ---------- */
+const $=id=>document.getElementById(id);
+function notice(msg,actions,html){
+  const n=$("notice"); n.hidden=!msg; n.innerHTML=""; if(!msg) return;
+  const s=document.createElement("span"); if(html) s.innerHTML=msg; else s.textContent=msg; n.appendChild(s);
+  (actions||[]).forEach(([label,fn,primary])=>{const b=document.createElement("button"); b.textContent=label; if(primary) b.className="primary"; b.addEventListener("click",fn); n.appendChild(b);});
+}
+function setHash(){const h=APP.ui.pid==="__all__"?"genel":(APP.ui.pid+"--"+APP.ui.tab); if(location.hash!=="#"+h){try{history.replaceState(null,"","#"+h);}catch(e){}}}
+function readHash(){const h=location.hash.slice(1); if(!h) return; if(h==="genel"){APP.ui.pid="__all__";return;}
+  const [pid,tab]=h.split("--"); if(APP.products[pid]){APP.ui.pid=pid; APP.ui.tab=tab||APP.products[pid].mOrder[0];}}
+function renderNav(){
+  const pb=$("prodbar"), sel=APP.ui.pid;
+  pb.innerHTML=`<button data-p="__all__" aria-selected="${sel==="__all__"}">Genel bakış</button>`+APP.order.map(id=>`<button data-p="${esc(id)}" data-sid="${esc(id)}" class="sortable-tab" title="Sürükleyerek sırasını değiştirebilirsiniz" aria-selected="${sel===id}">${esc(APP.products[id].name)}</button>`).join("")+`<button class="add" id="addProd" title="Yeni ürün sekmesi">+ Ürün</button>`;
+  pb.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>go(b.dataset.p));
+  $("addProd").onclick=addProductForm;
+  const sb=$("subbar");
+  if(sel==="__all__"){sb.innerHTML="";return;}
+  const P=curP(), t=APP.ui.tab;
+  sb.innerHTML=`<nav class="tabs" role="tablist">${P.mOrder.map(m=>`<button role="tab" data-t="${m}" data-sid="${m}" class="sortable-tab" title="Sürükleyerek sırasını değiştirebilirsiniz" aria-selected="${t===m}">${esc(P.markets[m].label)}${isSales(P.markets[m])?"":` <small class="refbadge">referans</small>`}</button>`).join("")}<button role="tab" data-t="ozet" aria-selected="${t==="ozet"}">Yönetici özeti</button><button class="add" id="addMarket" title="Yeni pazar">+ Pazar</button></nav>
+   <div class="pactions"><button id="pRename">Yeniden adlandır</button><button id="pCopy">Kopyasını oluştur</button><button id="pExport">Bu ürünü dışa aktar</button><button id="pDelete">Ürünü sil</button></div>`;
+  sb.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{APP.ui.tab=b.dataset.t; saveLocal(); renderView();});
+  $("addMarket").onclick=addMarketForm; $("pRename").onclick=renameForm; $("pCopy").onclick=()=>addProductForm(P.id); $("pExport").onclick=()=>exportJson(P.id); $("pDelete").onclick=deleteProductAsk;
+}
+function go(pid){APP.ui.pid=pid; if(pid!=="__all__"){const P=APP.products[pid]; if(!P.markets[APP.ui.tab]&&APP.ui.tab!=="ozet") APP.ui.tab=P.mOrder[0];} saveLocal(); renderView();}
+let lastViewKey="";
+function renderView(){
+  if(APP.ui.pid!=="__all__"&&!APP.products[APP.ui.pid]) APP.ui.pid=APP.order[0]||"__all__";
+  const v=$("view"), key=APP.ui.pid+"|"+APP.ui.tab, same=key===lastViewKey;
+  // aynı sayfa yeniden çiziliyorsa kaydırma konumlarını koru (tablolar başa dönmesin)
+  const st=same?{y:window.scrollY,xs:[...v.querySelectorAll(".scroll")].map(s=>s.scrollLeft),h:v.offsetHeight}:null;
+  if(st) v.style.minHeight=st.h+"px";
+  renderNav(); setHash(); lastViewKey=key;
+  if(APP.ui.pid==="__all__"){v.innerHTML=portfolioHTML(); bindPortfolio();}
+  else{ const P=curP(); if(APP.ui.tab!=="ozet"&&!P.markets[APP.ui.tab]) APP.ui.tab=P.mOrder[0]||"ozet";
+    if(APP.ui.tab==="ozet") v.innerHTML=productSummaryHTML(P);
+    else{ v.innerHTML=marketHTML(P,APP.ui.tab); bindMarket(P,APP.ui.tab); renderRows(P,APP.ui.tab); renderSpecs(P,APP.ui.tab); } }
+  if(st){ [...v.querySelectorAll(".scroll")].forEach((el,i)=>{if(st.xs[i]!=null) el.scrollLeft=st.xs[i];}); window.scrollTo(0,st.y); v.style.minHeight=""; }
+}
+
+/* ---------- sürükle-bırak sıralama ---------- */
+function sortable(container,itemSel,opts){
+  container.addEventListener("pointerdown",e=>{
+    if(e.button!==0) return;
+    const h=opts.handle?e.target.closest(opts.handle):e.target.closest(itemSel); if(!h||!container.contains(h)) return;
+    const item=h.closest(itemSel); if(!item||!container.contains(item)) return;
+    const sx=e.clientX, sy=e.clientY; let drag=false;
+    const move=ev=>{
+      if(!drag){ if(Math.hypot(ev.clientX-sx,ev.clientY-sy)<6) return; drag=true; item.classList.add("dragging"); document.body.classList.add("sorting"); }
+      ev.preventDefault();
+      const pos=opts.axis==="x"?ev.clientX:ev.clientY;
+      for(const s of [...container.querySelectorAll(itemSel)]){ if(s===item) continue; const r=s.getBoundingClientRect();
+        const inside=opts.axis==="x"?(ev.clientY>=r.top-8&&ev.clientY<=r.bottom+8&&pos>=r.left&&pos<=r.right):(pos>=r.top&&pos<=r.bottom);
+        if(inside){ const mid=opts.axis==="x"?r.left+r.width/2:r.top+r.height/2; if(pos<mid) s.before(item); else s.after(item); break; } }
+    };
+    const up=()=>{ window.removeEventListener("pointermove",move); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",up);
+      if(!drag) return; item.classList.remove("dragging"); document.body.classList.remove("sorting");
+      const stop=c=>{c.stopPropagation();c.preventDefault();}; item.addEventListener("click",stop,{capture:true,once:true}); setTimeout(()=>item.removeEventListener("click",stop,{capture:true}),80);
+      opts.onDone([...container.querySelectorAll(itemSel)].map(x=>x.dataset.sid)); };
+    window.addEventListener("pointermove",move,{passive:false}); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up);
+  });
+}
+/* ---------- ürün ve pazar yönetimi ---------- */
+function addProductForm(copyFrom){
+  const opts=APP.order.map(id=>`<option value="${esc(id)}" ${id===copyFrom?"selected":""}>${esc(APP.products[id].name)} ürününü kopyala</option>`).join("");
+  notice(`<span class="inline-form"><b>Yeni ürün</b> <input id="npName" placeholder="Ürün adı (ör. Marxlow 600W)"> <select id="npFrom"><option value="">Boş başla (Türkiye + ABD)</option>${opts}</select></span>`,[
+    ["Oluştur",()=>{const name=($("npName").value||"").trim()||"Yeni ürün", from=$("npFrom").value; let P;
+      if(from){P=clone(APP.products[from]); P.id=slug(name); P.name=name;} else P=emptyProduct(name);
+      normalize(P); APP.products[P.id]=P; APP.order.push(P.id); APP.ui.pid=P.id; APP.ui.tab=P.mOrder[0]; notice(""); commitProduct(P.id); commitMeta(); renderView();},true],
+    ["Vazgeç",()=>notice("")]],true);
+  setTimeout(()=>$("npName")&&$("npName").focus(),0);
+}
+function renameForm(){
+  const P=curP();
+  notice(`<span class="inline-form"><b>Ürün adı</b> <input id="rnName" value="${esc(P.name)}"></span>`,[["Kaydet",()=>{const n=($("rnName").value||"").trim(); if(n){P.name=n; commitProduct(P.id); commitMeta(); renderView();} notice("");},true],["Vazgeç",()=>notice("")]],true);
+}
+function deleteProductAsk(){
+  const P=curP();
+  notice(`“${P.name}” ürünü tüm pazarları ve teknik tablosuyla silinecek. Silmeden önce yedek alınır; “Yedekler”den geri dönebilirsiniz.`,[
+    ["Ürünü sil",async()=>{notice(""); await backupAll(`“${P.name}” silinmeden önce`); delete APP.products[P.id]; APP.order=APP.order.filter(x=>x!==P.id); APP.ui.pid=APP.order[0]||"__all__"; removeProductRemote(P.id); commitMeta(); saveLocal(); renderView();},true],["Vazgeç",()=>notice("")]]);
+}
+function addMarketForm(){
+  const P=curP();
+  notice(`<span class="inline-form"><b>Yeni pazar</b> <input id="nmName" placeholder="Pazar adı (ör. Almanya)"> <input id="nmCur" placeholder="Para birimi (€, £, TL)" style="min-width:90px;width:120px"> <select id="nmRole"><option value="reference">Referans pazar</option><option value="sales">Satış pazarı</option></select> <select id="nmTpl"><option value="eu">Amazon tipi (rozet ağırlıklı)</option><option value="tr">Pazaryeri tipi (Türkiye benzeri)</option><option value="us">ABD Amazon ayarlarıyla</option></select></span>`,[
+    ["Ekle",()=>{const name=($("nmName").value||"").trim()||"Yeni pazar", tpl=$("nmTpl").value, cur=($("nmCur").value||"").trim()||TPL[tpl].cur;
+      const M=newMarket(tpl,name,cur); M.role=$("nmRole").value; P.markets[M.id]=M; P.mOrder.push(M.id); APP.ui.tab=M.id; notice(""); commitProduct(P.id); renderView();},true],["Vazgeç",()=>notice("")]],true);
+}
+function deleteMarketAsk(P,mid){
+  notice(`“${P.markets[mid].label}” pazarı ve içindeki tüm satırlar silinecek. Silmeden önce yedek alınır.`,[
+    ["Pazarı sil",async()=>{notice(""); await backupAll(`“${P.name} / ${P.markets[mid].label}” silinmeden önce`); delete P.markets[mid]; P.mOrder=P.mOrder.filter(x=>x!==mid); APP.ui.tab=P.mOrder[0]||"ozet"; commitProduct(P.id); renderView();},true],["Vazgeç",()=>notice("")]]);
+}
+
+/* ---------- pazar görünümü ---------- */
+const COLS=`<tr><th aria-label="Sırala"></th><th>Dahil</th><th>Ürün</th><th>Kanal</th><th>Link</th><th class="num">Fiyat</th><th class="num">Puan</th><th class="num">Yorum (toplam)</th><th class="num">Son dönem yorum</th><th>Dönem</th><th class="num">Soru-cevap</th><th class="num">Favori</th><th class="num">Sepette</th><th class="num">Rozet adedi</th><th class="num">Rozet süresi (gün)</th><th>Yayın (YYYY-AA)</th><th class="num">Ay</th><th class="num">Editör çarpanı</th><th class="num">Satış / ay</th><th>Kaynak</th><th>Güven</th><th>Trend</th><th>Şerh</th><th>Tablo</th><th></th></tr>`;
+const CONF={strong:'<span class="conf ok">Güçlü</span>',ok:'<span class="conf ok">Makul</span>',clash:'<span class="conf lo">Sinyaller çelişiyor</span>',lo:'<span class="conf lo">Düşük güven</span>',estdate:'<span class="conf lo">Tahmini tarih</span>',na:'<span class="conf na">Veri yok</span>'};
+function marketHTML(P,mid){
+  const M=P.markets[mid], c=M.cur, tpl=M.tpl;
+  const seasonOpts=Object.entries(SEASONS).map(([k,s])=>`<option value="${k}">${s.label}</option>`).join("");
+  return `<div class="market ${isSales(M)?"":"ref"}">
+  <div class="rolebar"><label>Pazar rolü: <select id="roleSel"><option value="sales" ${isSales(M)?"selected":""}>Satış pazarı (Marxlow burada satılacak)</option><option value="reference" ${isSales(M)?"":"selected"}>Referans pazar (yalnızca pazar hacmi ve rekabet)</option></select></label>
+   <span class="hint">${isSales(M)?"Marxlow’un pay, senaryo, ciro ve fiyat hesapları bu pazar için yapılır.":"Bu pazarda Marxlow satışı öngörülmez; pazar büyüklüğü ve rakip payları satış pazarıyla kıyas için gösterilir."}</span></div>
+  <div class="summary hero-strip" id="strip"></div>
+  <div class="panel scen-panel mx-only"><div class="scen-head"><h2>Marxlow: ilk 12 ay senaryoları</h2><span class="hint">Adet ve ciro, ${esc(M.label)}</span></div><div class="scen" id="scen"></div></div>
+
+  <section><h2>Muadiller</h2>
+  <p class="lede">Doğrudan rakip ürünler. Fiyat konumu yalnızca bu tablodan hesaplanır. ↗ işareti ürün sayfasını yeni sekmede açar; satış hücresinin üzerine gelince hesabın ayrıntısı görünür. Satırları soldaki ⠿ tutamağından sürükleyerek sıralayabilirsiniz; teknik tablodaki sütun sırası da bu sırayı izler.</p>
+  <div class="panel scroll"><table class="rows"><thead>${COLS}</thead><tbody id="t-muadil"></tbody></table></div>
+  <div class="row-actions"><button data-add="muadil">Muadil ekle</button></div><div class="savebar"><button class="saveNow">Girilen verileri kaydet</button><span class="saveinfo" aria-live="polite"></span></div></section>
+
+  <section><h2>Satış hacmi için değerlendirilmeli</h2>
+  <p class="lede">Doğrudan muadil sayılmayan ama aynı alıcıya hitap eden ürünler. Toplam pazar hacmine ve dolayısıyla Marxlow tahminine dahil edilir; fiyat konumuna girmez.</p>
+  <div class="panel scroll"><table class="rows"><thead>${COLS}</thead><tbody id="t-hacim"></tbody></table></div>
+  <div class="row-actions"><button data-add="hacim">Ürün ekle</button></div><div class="savebar"><button class="saveNow">Girilen verileri kaydet</button><span class="saveinfo" aria-live="polite"></span></div></section>
+
+  <section class="mx-only" id="priceSec"><h2>Fiyat özeti ve öneri</h2>
+  <p class="lede">Muadil tablodaki dahil edilmiş ve fiyatı girilmiş satırlardan hesaplanır (kanal bazında liste fiyatları). Öneri bandı basit bir kurala dayanır: yeni marka olarak muadil ortancasının biraz altında konumlanmak; teknik tabloda Marxlow belirgin şekilde öndeyse ortalamaya kadar çıkmak.</p>
+  <div class="summary price-cards" id="priceCards"></div>
+  <div class="panel chart-wrap" style="margin-top:14px"><svg id="priceLadder" role="img" aria-label="Rakip fiyat haritası"></svg></div>
+  <div class="panel scroll" style="margin-top:14px"><table><thead><tr><th>Fiyat noktası</th><th class="num">Fiyat</th><th class="num">Ortalamaya göre</th><th class="num">Fiyat etkisi</th><th class="num">Marxlow baz / ay (olgun)</th><th class="num">İlk 12 ay karma adet</th><th class="num">İlk 12 ay karma ciro</th><th></th></tr></thead><tbody id="priceTbl"></tbody></table></div>
+  <div class="hint" id="priceNote" style="margin-top:8px"></div></section>
+  <section><h2>Pazarın görünen hali</h2>
+  <div class="panel scroll"><table><thead><tr><th>Ürün</th><th>Tablo</th><th class="num">Satış / ay</th><th class="num">Pay</th><th class="num">Ort. puan</th><th>Trend</th></tr></thead><tbody id="byProduct"></tbody></table></div></section>
+
+  <section class="mx-only"><h2>12 aylık öngörü</h2>
+  <p class="lede">Çubuklar baz senaryoyu, ince çizgiler kötümser–iyimser aralığını, kesikli çizgi geçişli senaryoyu gösterir.</p>
+  <div class="panel chart-wrap"><svg id="chart" role="img" aria-label="Aylık satış öngörüsü grafiği"></svg></div>
+  <div class="panel scroll" style="margin-top:16px"><table><thead><tr><th>Ay</th><th class="num">Kötümser</th><th class="num">Baz</th><th class="num">İyimser</th><th class="num">Geçişli</th><th class="num">Karma</th><th class="num">Baz ciro (${esc(c)})</th><th class="num">Karma ciro (${esc(c)})</th></tr></thead><tbody id="fc"></tbody></table></div></section>
+
+  <section><h2>Teknik karşılaştırma</h2>
+  <p class="lede">Marxlow ile rakiplerin teknik özellikleri. Sayısal özelliklerde renkler otomatik: <b>kırmızı</b> rakip Marxlow’dan iyi, <b>sarı</b> tolerans içinde (fark önemsiz), <b>yeşil</b> Marxlow daha iyi. Metin özelliklerde ya da otomatik rengi değiştirmek için hücredeki ○ düğmesine tıklayın. Özellik satırlarını ekleyip silebilir, ⠿ tutamağından sürükleyerek sıralayabilirsiniz; bu tablo ürünün tüm pazarlarında ortaktır.</p>
+  <div class="spec-legend"><span style="--c:color-mix(in srgb,var(--charge) 40%,transparent)">Marxlow daha iyi</span><span style="--c:color-mix(in srgb,var(--amber) 40%,transparent)">Fark önemsiz</span><span style="--c:color-mix(in srgb,var(--low) 40%,transparent)">Rakip daha iyi</span>
+   <label><input type="checkbox" id="specAll"> Tüm pazarlardaki ürünleri göster</label></div>
+  <div class="panel scroll"><table class="spec" id="spec"></table></div>
+  <div class="row-actions"><button id="addAttr">Özellik ekle</button></div><div class="savebar"><button class="saveNow">Girilen verileri kaydet</button><span class="saveinfo" aria-live="polite"></span></div></section>
+
+  <section><h2>Varsayımlar</h2>
+  <div class="panel grid">
+    <div class="field mx"><label>Marxlow satış fiyatı (${esc(c)})</label><input type="number" data-p="ourPrice" min="0" step="any" placeholder="girin"><div class="hint">Ciro ve fiyat konumu hesabında kullanılır.</div></div>
+    <div class="field"><label>Yorum bırakan alıcı oranı</label><div class="range-row"><input type="range" data-p="rate" min="0.5" max="12" step="0.5"><output data-o="rate"></output></div><div class="hint">${tpl==="tr"?"Dayanıklı elektronikte genelde %2–6.":"Amazon’da genelde %1–3."} Oran düştükçe tahmini satış artar.</div></div>
+    <div class="field"><label>Rozet çarpanı</label><input type="number" data-p="badgeUp" min="1" step="0.1"><div class="hint">“Geçen ay 200+ satın alındı” gibi rozetler bir alt sınırdır.</div></div>
+    <div class="field"><label>Soru başına satış</label><input type="number" data-p="salesPerQ" min="0" step="1"><div class="hint">Her soru-cevaba karşılık gelen tahmini satış adedi.</div></div>
+    <div class="field"><label>İlgi sinyali sınırı (kat)</label><input type="number" data-p="interestCap" min="0" step="1"><div class="hint">Soru-cevap ve favori yalnızca ilgiyi gösterir; yorum ise gerçek bir satın almanın kanıtıdır. Bir satırda soru veya favori tahmini, yorum tahmininin bu katından fazlaysa ağırlığı orantılı olarak kısılır ve kaynak sütununda “kısıldı” yazar. 0 = kapalı.</div></div>
+    <div class="field"><label>Favoriden satışa dönüşüm (%)</label><input type="number" data-p="favConv" min="0" step="1"></div>
+    <div class="field"><label>Sepet çarpanı</label><input type="number" data-p="cartMult" min="0" step="0.1"><div class="hint">“X kişinin sepetinde” anlık sayısını aylık satışa çevirir.</div></div>
+    <div class="field wide"><label><input type="checkbox" data-p="autoCal"> Oranları verilerden otomatik kalibre et</label><div class="hint">Birden fazla sinyali olan ürünlerden gerçek dönüşüm oranları öğrenilir; yeterli veri yoksa manuel değerler kullanılır.</div><div class="hint cal" data-o="cal"></div></div>
+    <div class="field"><label>Tarihi bilinmeyen ürünler için varsayılan yaş (ay)</label><input type="number" data-p="defaultAge" min="1" step="1"><div class="hint">Yayın tarihi ve son dönem yorumu olmayan satırlarda kullanılır; bu satırlar daha düşük ağırlık alır.</div><div class="hint cal" data-o="ageAff"></div></div>
+    <div class="field"><label>Son dönem yorumunun önceliği</label><div class="range-row"><input type="range" data-p="recentPriority" min="0" max="100" step="10" aria-label="Son dönem yorumunun önceliği"><output data-o="recentPriority"></output></div><div class="hint">Soru-cevap ve favori sayıları ürünün tüm geçmişinde birikir, yani geçmişteki satış hızını yansıtır. Bir satırda son dönem yorumu girildiyse bu birikimli sinyallerin ağırlığı bu oranda azaltılır. %0 = eşit davran, %100 = yalnızca son dönem verisine (ve varsa rozet, sepet gibi anlık sinyallere) güven.</div><div class="hint cal" data-o="recentAff"></div></div>
+    <div class="field"><label>Ölçülen verinin pazardaki payı</label><div class="range-row"><input type="range" data-p="coverage" min="10" max="100" step="5"><output data-o="coverage"></output></div><div class="hint">${COVHINT[tpl]||COVHINT.eu}</div></div>
+    <div class="field mx"><label>Yıllık pazar büyümesi (%)</label><input type="number" data-p="growth" step="1"><div class="hint">Toplam pazarın her yıl ne kadar büyüdüğü. Bugünkü veriden ölçülen pazar, her ay için bugünden o aya kadar geçen süreye göre büyütülür; satış ileri bir tarihte başlıyorsa o aya kadarki büyüme de hesaba girer. Negatif değer daralan pazar demektir. Varsayılan %10 bir tahmindir.</div></div>
+    <div class="field mx"><label>Marxlow pazar payı (olgun dönem)</label><div class="share3">
+      <span><input type="number" data-p="sharePess" min="0" step="0.5" aria-label="Kötümser pay"><small>Kötümser %</small></span>
+      <span><input type="number" data-p="shareBase" min="0" step="0.5" aria-label="Baz pay"><small>Baz %</small></span>
+      <span><input type="number" data-p="shareOpt" min="0" step="0.5" aria-label="İyimser pay"><small>İyimser %</small></span></div><div class="hint">${SHAREHINT[tpl]||SHAREHINT.eu}</div></div>
+    <div class="field mx"><label>Karma senaryo ağırlıkları</label><div class="share3 share4">
+      <span><input type="number" data-p="wPess" min="0" step="5" aria-label="Kötümser ağırlık"><small>Kötümser</small></span>
+      <span><input type="number" data-p="wBase" min="0" step="5" aria-label="Baz ağırlık"><small>Baz</small></span>
+      <span><input type="number" data-p="wOpt" min="0" step="5" aria-label="İyimser ağırlık"><small>İyimser</small></span>
+      <span><input type="number" data-p="wPath" min="0" step="5" aria-label="Geçişli ağırlık"><small>Geçişli</small></span></div>
+      <div class="hint">Karma sonuç, senaryoların bu ağırlıklarla ortalamasıdır; ağırlıkların toplamı 100 olmak zorunda değil, oranları kullanılır. Hepsini eşit girerseniz düz ortalama olur. Geçişli senaryo kapalıysa onun ağırlığı yok sayılır.</div></div>
+    <div class="field mx"><label><input type="checkbox" data-p="pathOn"> Geçişli senaryo</label>
+      <div class="path-row"><select data-p="pathFrom" aria-label="Başlangıç"><option value="sharePess">Kötümser</option><option value="shareBase">Baz</option><option value="shareOpt">İyimser</option></select><span>→</span><select data-p="pathTo" aria-label="Hedef"><option value="sharePess">Kötümser</option><option value="shareBase">Baz</option><option value="shareOpt">İyimser</option></select></div>
+      <div class="path-row">İlk <input type="number" class="mini" data-p="pathHold" min="0" max="11" step="1" aria-label="Bekleme"> ay başlangıç payında kalır, sonra <input type="number" class="mini" data-p="pathMonths" min="1" max="12" step="1" aria-label="Geçiş süresi"> ayda hedef paya çıkar.</div><div class="hint cal" data-o="pathRes"></div></div>
+    <div class="field mx"><label><input type="checkbox" data-p="priceOn"> Fiyat konumu etkisi</label><div class="range-row"><input type="range" data-p="elast" min="0" max="3" step="0.1" aria-label="Fiyat hassasiyeti"><output data-o="elast"></output></div><div class="hint">Marxlow muadillerin ortalama fiyatından ucuzsa pay artar, pahalıysa azalır. Kaydırıcı hassasiyettir. <span data-o="pf"></span></div></div>
+    <div class="field mx"><label><input type="checkbox" data-p="techOn"> Teknik üstünlük etkisi</label><div class="range-row"><input type="range" data-p="techK" min="0" max="50" step="5" aria-label="Teknik etki gücü"><output data-o="techK"></output></div><div class="hint">Teknik karşılaştırmadaki renklerin önem ağırlıklı skoru payı en fazla seçilen oranda yukarı veya aşağı çeker. <span data-o="tf"></span></div></div>
+    <div class="field mx"><label>Reklam ve kampanya yoğunluğu</label><select data-p="ads"><option value="0.7">Reklam yok</option><option value="1">Orta</option><option value="1.4">Güçlü</option></select></div>
+    <div class="field mx"><label>Tam hıza ulaşma süresi (ay)</label><input type="number" data-p="ramp" min="1" max="12" step="1"><div class="hint">Sıfır yorum etkisi; ilk ay potansiyelin %30’u ile başlar.</div></div>
+    <div class="field mx"><label>Satış başlangıç ayı</label><input type="text" data-p="start" placeholder="2026-12"></div>
+    <div class="field wide mx"><label><input type="checkbox" data-p="season"> Mevsimsellik</label>
+      <div class="path-row">Hazır profil: <select id="seasonPreset">${seasonOpts}<option value="custom">Özel (elle düzenlendi)</option></select></div>
+      <div class="season-grid">${MONTHS.map((m,i)=>`<label>${m.slice(0,3)}<input type="number" step="0.05" min="0" data-season="${i}" aria-label="${m} katsayısı"></label>`).join("")}</div>
+      <div class="hint">1 = ortalama ay. 1,2 o ayın ortalamadan %20 fazla sattığı anlamına gelir. Hesapta 12 ayın ortalaması her zaman 1’e eşitlenir; yani mevsimsellik bir takvim yılının toplamını değiştirmez, satışı aylara dağıtır. İlk 12 ayın toplamı yine de profile göre birkaç yüzde değişebilir: ilk aylar lansman dönemine (tam hıza ulaşma süresi) denk geldiği için, yüksek katsayılı ayların bu döneme düşmesi toplamı biraz azaltır, sonraya düşmesi biraz artırır.</div><div class="hint cal" data-o="seasonAvg"></div></div>
+  </div>
+  <div class="summary mx-only" style="margin-top:18px" id="msummary"></div><div class="savebar"><button class="saveNow">Girilen verileri kaydet</button><span class="saveinfo" aria-live="polite"></span></div></section>
+
+  <div class="row-actions" style="margin-top:28px"><button id="delMarket">Bu pazarı sil</button></div>
+  </div>`;
+}
+function rowHTML(M,r,i){
+  const ch=M.channels.map(c=>`<option ${c===r.ch?"selected":""}>${esc(c)}</option>`).join("")+(M.channels.includes(r.ch)?"":`<option selected>${esc(r.ch)}</option>`);
+  const n=(k,ph="")=>`<td class="num"><input type="number" class="n" data-k="${k}" value="${esc(r[k])}" placeholder="${ph}" step="any"></td>`;
+  const href=/^https?:\/\//.test(r.link||"")?r.link:"";
+  return `<tr data-i="${i}" data-sid="${i}">
+   <td class="grip" title="Sürükleyerek sırala">⠿</td>
+   <td><input type="checkbox" data-k="inc" ${r.inc?"checked":""} aria-label="Hesaba dahil et"></td>
+   <td><input type="text" class="name" data-k="name" value="${esc(r.name)}" aria-label="Ürün adı"></td>
+   <td><select data-k="ch" aria-label="Kanal">${ch}</select></td>
+   <td class="linkcell"><input type="url" class="url" data-k="link" value="${esc(r.link)}" placeholder="link yapıştırın" aria-label="Ürün linki">${href?`<a href="${esc(href)}" target="_blank" rel="noopener noreferrer" title="Ürün sayfasını aç">↗</a>`:`<span class="nolink">–</span>`}</td>
+   ${n("price","girin")}${n("rating")}${n("rev","girin")}${n("recentRev")}<td><select data-k="recentDays" aria-label="Son dönem süresi">${[30,60,90,180,360].map(d=>`<option value="${d}" ${+r.recentDays===d?"selected":""}>${d} gün</option>`).join("")}</select></td>${n("qa")}${n("fav")}${n("cart")}${n("badge")}${n("badgeDays","30")}
+   <td><input type="text" class="date" data-k="date" value="${esc(r.date)}" placeholder="2025-03" aria-label="Yayın tarihi"></td>
+   <td class="num" data-o="months"></td>
+   <td class="num"><input type="number" class="n mult" data-k="mult" value="${esc(r.mult)}" placeholder="1" step="0.1" min="0" aria-label="Editör çarpanı"></td>
+   <td class="num" data-o="units"></td><td data-o="src" class="src"></td><td data-o="conf"></td><td data-o="trend" class="trend"></td>
+   <td><input type="text" class="note" data-k="note" value="${esc(r.note)}" placeholder="şerh ekleyin" aria-label="Şerh"></td>
+   <td><select data-k="grp" aria-label="Tablo"><option value="muadil" ${r.grp==="muadil"?"selected":""}>Muadil</option><option value="hacim" ${r.grp==="hacim"?"selected":""}>Hacim</option></select></td>
+   <td><button class="x" aria-label="Satırı sil">×</button></td></tr>`;
+}
+function renderRows(P,mid){
+  const M=P.markets[mid], sx=[...document.querySelectorAll("#view .scroll")].map(s=>s.scrollLeft);
+  setTimeout(()=>document.querySelectorAll("#view .scroll").forEach((s,i)=>{if(sx[i]!=null) s.scrollLeft=sx[i];}),0);
+  ["muadil","hacim"].forEach(g=>{
+    const tb=$("t-"+g); if(!tb) return;
+    tb.innerHTML=M.rows.map((r,i)=>r.grp===g?rowHTML(M,r,i):"").join("")||`<tr><td colspan="25" class="empty">Bu tabloda henüz ürün yok.</td></tr>`;
+    tb.querySelectorAll("tr[data-i]").forEach(tr=>{
+      const r=M.rows[+tr.dataset.i];
+      tr.querySelectorAll("[data-k]").forEach(el=>{
+        el.addEventListener(el.tagName==="SELECT"||el.type==="checkbox"?"change":"input",()=>{
+          const k=el.dataset.k; r[k]=el.type==="checkbox"?el.checked:el.value;
+          if(k==="grp"){renderRows(P,mid);renderSpecs(P,mid);commitProduct(P.id);return;}
+          if(k==="link"){const a=tr.querySelector(".linkcell a, .linkcell .nolink");const ok=/^https?:\/\//.test(r.link||"");const nw=ok?Object.assign(document.createElement("a"),{href:r.link,target:"_blank",rel:"noopener noreferrer",textContent:"↗",title:"Ürün sayfasını aç"}):Object.assign(document.createElement("span"),{className:"nolink",textContent:"–"});a.replaceWith(nw);}
+          changed(P,mid); if(k==="name") renderSpecs(P,mid);
+        });
+      });
+      tr.querySelector("button.x").addEventListener("click",()=>{M.rows.splice(+tr.dataset.i,1);renderRows(P,mid);renderSpecs(P,mid);commitProduct(P.id);});
+    });
+  });
+  refresh(P,mid);
+}
+function bindMarket(P,mid){
+  const M=P.markets[mid], p=M.p, root=$("view");
+  root.querySelectorAll("[data-p]").forEach(el=>{
+    const k=el.dataset.p;
+    if(el.type==="checkbox") el.checked=!!p[k]; else el.value=p[k]??"";
+    el.addEventListener(el.tagName==="SELECT"||el.type==="checkbox"?"change":"input",()=>{
+      p[k]=el.type==="checkbox"?el.checked:(el.tagName==="SELECT"||k==="start"?el.value:(el.value===""?"":num(el.value))); changed(P,mid);
+    });
+  });
+  const sp=$("seasonPreset");
+  const detected=()=>{const hit=Object.entries(SEASONS).find(([,s])=>s.v.every((x,i)=>Math.abs(x-(num(p.seasonV[i])||0))<1e-9)); return hit?hit[0]:"custom";};
+  sp.value=p.seasonPreset||detected();
+  root.querySelectorAll("[data-season]").forEach(el=>{const i=+el.dataset.season; el.value=p.seasonV[i];
+    el.addEventListener("input",()=>{p.seasonV[i]=num(el.value); p.seasonPreset="custom"; sp.value="custom"; changed(P,mid);});});
+  sp.addEventListener("change",e=>{const s=SEASONS[e.target.value]; if(!s){e.target.value=p.seasonPreset||detected();return;} p.seasonV=s.v.slice(); p.seasonPreset=e.target.value; root.querySelectorAll("[data-season]").forEach(el=>el.value=p.seasonV[+el.dataset.season]); changed(P,mid);});
+  root.querySelectorAll("[data-add]").forEach(b=>b.addEventListener("click",()=>{M.rows.push(newRow(M,b.dataset.add));renderRows(P,mid);commitProduct(P.id);}));
+  $("addAttr").onclick=()=>{P.specs.attrs.push({id:"a"+Date.now().toString(36),name:"",unit:"",dir:"high",tol:5,w:2}); renderSpecs(P,mid); commitProduct(P.id); const last=[...document.querySelectorAll("#spec input.aname")].pop(); last&&last.focus();};
+  $("specAll").onchange=()=>renderSpecs(P,mid);
+  ["muadil","hacim"].forEach(g=>sortable($("t-"+g),"tr[data-sid]",{handle:".grip",axis:"y",onDone:ids=>{
+    const grpRows=ids.map(i=>M.rows[+i]).filter(Boolean), others=M.rows.filter(r=>!grpRows.includes(r));
+    M.rows=g==="muadil"?[...grpRows,...others]:[...others,...grpRows]; renderRows(P,mid); renderSpecs(P,mid); commitProduct(P.id);}}));
+  sortable($("spec"),"tr[data-sid]",{handle:".grip",axis:"y",onDone:ids=>{P.specs.attrs=ids.map(i=>P.specs.attrs[+i]).filter(Boolean); renderSpecs(P,mid); changed(P,mid);}});
+  $("delMarket").onclick=()=>deleteMarketAsk(P,mid);
+  $("roleSel").onchange=e=>{M.role=e.target.value; commitProduct(P.id); renderView();};
+}
+function refresh(P,mid){
+  const R=compute(P,mid), M=R.M, p=M.p, root=$("view"), cur=M.cur;
+  const o=k=>root.querySelector(`[data-o="${k}"]`);
+  // Kalibrasyonla belirlenen alanlar kilitlenir; "elle sabitle" ile kullanıcı değeri öne geçer
+  const CALF=[["rate","rate",v=>v*100,"%"],["salesPerQ","spq",v=>v,""],["favConv","fav",v=>v*100,"%"],["cartMult","cart",v=>v,""]];
+  CALF.forEach(([k,ck,conv,pre])=>{const el=root.querySelector(`[data-p="${k}"]`); if(!el) return; const fld=el.closest(".field"); let info=fld.querySelector(".calinfo");
+    if(!info){info=document.createElement("div"); info.className="hint calinfo"; fld.appendChild(info);}
+    let man=fld.querySelector(".manbox"); if(!man){man=document.createElement("label"); man.className="manbox"; man.innerHTML=`<input type="checkbox"> Elle girdiğim değeri kullan (kalibrasyonu bu oran için kapat)`; fld.insertBefore(man,info);
+      man.querySelector("input").addEventListener("change",e=>{p[k+"Man"]=e.target.checked; changed(P,mid);});}
+    man.querySelector("input").checked=!!p[k+"Man"];
+    const calOn=p.autoCal&&R.cal.src[ck]&&!p[k+"Man"], could=p.autoCal&&!!(p[k+"Man"]);
+    man.hidden=!(p.autoCal&&(R.cal.src[ck]||p[k+"Man"]));
+    el.disabled=!!calOn; fld.classList.toggle("calibrated",!!calOn);
+    if(calOn){ if(document.activeElement!==el) el.value=Math.round(conv(R.cal[ck])*10)/10; info.textContent=`Kalibrasyon kullanılıyor: ${pre}${fmt1(conv(R.cal[ck]))} (${R.cal.src[ck]} üründen öğrenildi). Kutudaki değer bilgi amaçlıdır; kendi değerinizi kullanmak için yukarıdaki seçeneği işaretleyin.`; }
+    else { if(document.activeElement!==el&&String(el.value)!==String(p[k]??"")) el.value=p[k]??"";
+      const dataKey={rate:"badge",salesPerQ:"qa",favConv:"fav",cartMult:"cart"}[k], hasData=M.rows.some(r=>r.inc&&num(r[dataKey])>0);
+      const need={rate:"hem rozet verisi hem güçlü yorum verisi",salesPerQ:"güçlü yorum verisi, yayın tarihi ve en az 10 soru-cevap",favConv:"güçlü yorum verisi, yayın tarihi ve en az 10 favori",cartMult:"güçlü yorum verisi ve sepet sayısı"}[k];
+      info.classList.toggle("nocal",!could);
+      if(could) info.textContent="Elle girdiğiniz değer kullanılıyor.";
+      else if(!p.autoCal) info.textContent="Otomatik kalibrasyon kapalı; elle girdiğiniz değer kullanılıyor.";
+      else if(k!=="rate"&&!hasData) info.textContent="";
+      else info.textContent=`Kalibrasyon yapılamadı: bu pazarda ${need} birlikte bulunan bir satır yok. Elle girdiğiniz değer kullanılıyor. (Güçlü yorum verisi: son dönemde en az 5 yorum ya da yayın tarihi girilmiş en az 20 toplam yorum.)`; }
+  });
+  // O anki koşulda etkisi olmayan ayarları soluklaştır ve sebebini yaz
+  const inc=M.rows.filter(r=>r.inc), has=k=>inc.some(r=>num(r[k])>0);
+  const INACT=[["techK",!p.techOn,"Teknik üstünlük etkisi kapalı; bu ayar etkisiz."],["elast",!p.priceOn,"Fiyat konumu etkisi kapalı; bu ayar etkisiz."],
+    ["cartMult",!has("cart"),"Bu pazarda “Sepette” verisi girilmiş satır yok; bu ayar şu an etkisiz."],["badgeUp",!has("badge"),"Bu pazarda rozet verisi girilmiş satır yok; bu ayar şu an etkisiz."],
+    ["favConv",!has("fav"),"Bu pazarda favori verisi girilmiş satır yok; bu ayar şu an etkisiz."],["salesPerQ",!has("qa"),"Bu pazarda soru-cevap verisi girilmiş satır yok; bu ayar şu an etkisiz."],
+    ["pathFrom",!p.pathOn,"Geçişli senaryo kapalı."],["wPath",!p.pathOn,"Geçişli senaryo kapalı; ağırlığı yok sayılıyor."],["seasonPreset",!p.season,"Mevsimsellik kapalı; katsayılar kullanılmıyor."]];
+  INACT.forEach(([k,off,msg])=>{const el=k==="seasonPreset"?$("seasonPreset"):root.querySelector(`[data-p="${k}"]`); if(!el) return; const fld=el.closest(".field"); if(!fld) return;
+    let n=fld.querySelector(".inactive-note"); if(!n){n=document.createElement("div"); n.className="hint inactive-note"; fld.appendChild(n);}
+    fld.classList.toggle("inactive",!!off); n.textContent=off?msg:""; n.hidden=!off;});
+  o("rate").textContent="%"+fmt1(p.autoCal&&R.cal.src.rate&&!p.rateMan?Math.round(R.cal.rate*1000)/10:p.rate); o("coverage").textContent="%"+fmt1(p.coverage); o("elast").textContent=fmt1(p.elast); o("techK").textContent="±%"+fmt1(p.techK);
+  const cal=R.cal;
+  o("cal").textContent=p.autoCal?`Kullanılan değerler: yorum oranı %${fmt1(cal.rate*100)}${cal.src.rate?` (${cal.src.rate} rozetli üründen kalibre)`:" (manuel)"}, soru başına ${fmt1(cal.spq)} satış${cal.src.spq?` (${cal.src.spq} üründen kalibre)`:" (manuel)"}, favori dönüşümü %${fmt1(cal.fav*100)}${cal.src.fav?" (kalibre)":" (manuel)"}, sepet çarpanı ${fmt1(cal.cart)}${cal.src.cart?" (kalibre)":" (manuel)"}.`:"Otomatik kalibrasyon kapalı; oranlar manuel değerlerden alınıyor.";
+  const aff=M.rows.filter(r=>r.inc&&!(monthsSince(r.date)>0)&&!hasNum(r.recentRev)&&(hasNum(r.rev)||num(r.qa)>0||num(r.fav)>0)).map(r=>`${r.name} (${r.ch})`);
+  { const sv=(p.seasonV||[]).map(x=>num(x)||0), sm=sv.reduce((a,b)=>a+b,0)/12; const el=o("seasonAvg"); if(el) el.textContent=p.season?(Math.abs(sm-1)<0.005?"Girilen katsayıların ortalaması 1; ek düzeltme gerekmedi.":`Girilen katsayıların ortalaması ${fmt1(Math.round(sm*1000)/1000)}; hesapta her ay bu değere bölünerek ortalama 1’e eşitleniyor.`):"Mevsimsellik kapalı."; }
+  o("recentPriority").textContent="%"+fmt1(hasNum(p.recentPriority)?num(p.recentPriority):50);
+  const rec=M.rows.filter(r=>r.inc&&hasNum(r.recentRev)).map(r=>`${r.name} (${r.ch}): ${r.recentRev} yorum / ${r.recentDays} gün`);
+  o("recentAff").textContent=rec.length?`Son dönem yorumu girilmiş ${rec.length} satır: ${rec.join("; ")}.`:"Henüz son dönem yorumu girilmiş satır yok.";
+  o("ageAff").textContent=aff.length?`Şu an bu ayardan etkilenen ${aff.length} satır: ${aff.join(", ")}.`:"Şu an bu ayardan etkilenen satır yok.";
+  o("pf").textContent=isFinite(R.avgPrice)&&R.price>0?`Muadil ortalaması ${curFmt(R.avgPrice,cur)}; etki ×${fmt1(R.pf)}${p.priceOn?"":" (kapalı)"}.`:"Hesap için Marxlow fiyatı ve en az bir muadil fiyatı gerekli.";
+  o("tf").textContent=isFinite(R.tech)?`Teknik skor ${R.tech>0?"+":""}${fmt(R.tech)}; etki ×${fmt1(p.techOn?R.tf:1)}${p.techOn?"":" (kapalı)"}.`:"Teknik tabloda muadiller için renk oluşmadı.";
+  M.rows.forEach((r,i)=>{const c=R.calcs[i], tr=root.querySelector(`tr[data-i="${i}"]`); if(!tr) return;
+    tr.querySelector('[data-o="months"]').textContent=isFinite(c.months)?(c.est?"~"+c.months:c.months):"–";
+    const uc=tr.querySelector('[data-o="units"]'); uc.textContent=isFinite(c.units)?fmt(c.units):"–"; uc.title=c.tip;
+    tr.querySelector('[data-o="src"]').textContent=c.src||"–"; tr.querySelector('[data-o="conf"]').innerHTML=CONF[c.conf]; tr.querySelector('[data-o="trend"]').textContent=c.trend||"–";
+    tr.classList.toggle("edited",!!c.edited);});
+  $("byProduct").innerHTML=R.list.length?R.list.map(([n,b])=>`<tr><td>${esc(n)}</td><td>${b.grp==="muadil"?"Muadil":"Hacim"}</td><td class="num">${fmt(b.u)}</td><td class="num">%${fmt(b.u/R.measured*100)}</td><td class="num">${b.rs.length?fmt1(b.rs.reduce((x,y)=>x+y,0)/b.rs.length):"–"}</td><td>${b.trend||"–"}</td></tr>`).join("")+`<tr><td><b>Ölçülen toplam</b></td><td></td><td class="num"><b>${fmt(R.measured)}</b></td><td></td><td></td><td></td></tr><tr class="cov-row"><td colspan="2"><b>Tahmini toplam pazar</b><br><small>Ölçülen ${fmt(R.measured)} adet ÷ kapsama %${fmt1(p.coverage)} (Varsayımlar › “Ölçülen verinin pazardaki payı”)</small></td><td class="num"><b>${fmt(R.market)}</b></td><td colspan="3"><small>Muadil kısmı: ${fmt(R.measured?R.muadil*(num(p.coverage)||100)/100:NaN)} ÷ %${fmt1(p.coverage)} = ${fmt(R.muadil)}</small></td></tr>`:'<tr><td colspan="6">Henüz hesaplanabilir satır yok.</td></tr>';
+  const ok=isFinite(R.tB)&&R.tB>0;
+  if(!isSales(M)){
+    const sm=P.mOrder.find(x=>isSales(P.markets[x])), SR=sm?compute(P,sm):null, ld0=R.list[0];
+    $("strip").innerHTML=`<div><b>${fmt(R.market)}</b><span>${esc(M.label)} toplam pazar: aylık adet (tahmini; ölçülen ${fmt(R.measured)} ÷ %${fmt1(p.coverage)} kapsama)</span></div><div><b>${fmt(R.muadil)}</b><span>Bunun muadil segmenti: aylık adet</span></div><div><b>${SR&&SR.market>0?"×"+fmt1(R.market/SR.market):"–"}</b><span>${SR?esc(SR.M.label)+" pazarının katı (toplam pazar)":"Kıyas için bir satış pazarı yok"}</span></div><div><b>${ld0?"%"+fmt(ld0[1].u/R.measured*100):"–"}</b><span>Lider ürünün payı${ld0?" ("+esc(ld0[0])+")":""}${ld0&&SR?(()=>{const t=SR.list.find(([n])=>n===ld0[0]); return t?` · ${esc(SR.M.label)}’de %${fmt(t[1].u/SR.measured*100)}`:"";})():""}</span></div>`;
+  } else
+  $("strip").innerHTML=`<div><b>${fmt(R.market)}</b><span>${esc(M.label)} toplam pazar: aylık adet (tahmini; ölçülen ${fmt(R.measured)} ÷ %${fmt1(p.coverage)} kapsama)</span></div><div><b>${fmt(R.muadil)}</b><span>Bunun muadil segmenti: aylık adet</span></div><div><b>${fmt(R.mature.base)}</b><span>Marxlow baz: aylık adet (olgun dönem, efektif pay %${fmt1(R.market?R.mature.base/R.market*100:NaN)})</span></div><div><b>${fmt(R.mature.pess)}–${fmt(R.mature.opt)}</b><span>Marxlow aralığı: aylık adet</span></div>`;
+  { const lbl={sharePess:"kötümser",shareBase:"baz",shareOpt:"iyimser"};
+    const S=[["Kötümser",R.tP,`%${fmt1(num(p.sharePess))} pay`,"pess"],["Baz",R.tB,`%${fmt1(num(p.shareBase))} pay`,"base"],["İyimser",R.tO,`%${fmt1(num(p.shareOpt))} pay`,"opt"]];
+    if(R.pathOn) S.push(["Geçişli",R.tPath,`${lbl[p.pathFrom||"sharePess"]} → ${lbl[p.pathTo||"shareOpt"]}`,"path"]);
+    const wtxt=["pess","base","opt","path"].filter(k=>R.wPct[k]>0).map(k=>({pess:"Kötümser",base:"Baz",opt:"İyimser",path:"Geçişli"})[k]+" %"+fmt(R.wPct[k])).join(" · ");
+    S.push(["Karma",R.tK,wtxt,"karma"]);
+    const mx=Math.max(...S.map(s=>isFinite(s[1])?s[1]:0),1);
+    $("scen").innerHTML=ok?S.map(([n,v,sub,k])=>`<div class="scen-row s-${k}"><div class="scen-name">${n}<small>${esc(sub)}</small></div><div class="scen-track"><div class="scen-bar" style="width:${Math.max(1,v/mx*100)}%"></div></div><div class="scen-val"><b>${fmt(v)} adet</b><small>${curFmt(v*R.price,cur)}</small></div></div>`).join(""):'<p class="lede">Hesaplanabilir veri yok.</p>'; }
+  { const pr=root.querySelector('[data-o="pathRes"]'); if(pr){ const lbl={sharePess:"kötümser",shareBase:"baz",shareOpt:"iyimser"};
+    pr.textContent=R.pathOn&&ok?`Sonuç: ilk 12 ayda ${fmt(R.tPath)} adet, ciro ${curFmt(R.tPath*R.price,cur)} (baz senaryo ${fmt(R.tB)} adet; fark %${R.tPath>=R.tB?"+":"−"}${fmt(Math.abs(R.tPath/R.tB-1)*100)}). Pay %${fmt1(num(p[p.pathFrom||"sharePess"]))} (${lbl[p.pathFrom||"sharePess"]}) ile başlayıp %${fmt1(num(p[p.pathTo||"shareOpt"]))} (${lbl[p.pathTo||"shareOpt"]}) seviyesine çıkıyor. Aylık dağılım 12 aylık öngörü tablosunun “Geçişli” sütununda.`:(R.pathOn?"":"Geçişli senaryo kapalı."); } }
+
+  const ld=R.list[0];
+  $("msummary").innerHTML=`<div><b>×${fmt1(R.pf)}</b><span>Fiyat konumu etkisi${p.priceOn?"":" (kapalı)"}</span></div><div><b>×${fmt1(p.techOn?R.tf:1)}</b><span>Teknik üstünlük etkisi${p.techOn?"":" (kapalı)"}</span></div><div><b>×${fmt1(num(p.ads)||1)}</b><span>Reklam yoğunluğu etkisi</span></div><div><b>${ld?"%"+fmt(ld[1].u/R.measured*100):"–"}</b><span>Lider ürünün ölçülen pazardaki payı${ld?" ("+esc(ld[0])+")":""}</span></div>`;
+  $("fc").innerHTML=R.months.map(r=>`<tr><td>${r.label}</td><td class="num">${fmt(r.pess)}</td><td class="num"><b>${fmt(r.base)}</b></td><td class="num">${fmt(r.opt)}</td><td class="num">${fmt(r.path)}</td><td class="num"><b>${fmt(r.karma)}</b></td><td class="num">${fmt(r.base*R.price)}</td><td class="num">${fmt(r.karma*R.price)}</td></tr>`).join("")+`<tr><td><b>Toplam</b></td><td class="num"><b>${fmt(R.tP)}</b></td><td class="num"><b>${fmt(R.tB)}</b></td><td class="num"><b>${fmt(R.tO)}</b></td><td class="num"><b>${fmt(R.tPath)}</b></td><td class="num"><b>${fmt(R.tK)}</b></td><td class="num"><b>${fmt(R.tB*R.price)}</b></td><td class="num"><b>${fmt(R.tK*R.price)}</b></td></tr>`;
+  drawChart($("chart"),R.months,ok);
+  if(isSales(M)) renderPrice(P,mid,R);
+}
+function changed(P,mid){refresh(P,mid); commitProduct(P.id);}
+/* ---------- fiyat özeti ve öneri ---------- */
+function computeAt(P,mid,price){const p=P.markets[mid].p, old=p.ourPrice; p.ourPrice=price; try{return compute(P,mid);}finally{p.ourPrice=old;}}
+const roundPrice=v=>{if(!(v>0)) return v; const s=v>=10000?100:v>=1000?10:1; return Math.max(s, Math.round(v/s/10)*s*10 - (v>=1000?10:1));};
+function capAttr(P){return P.specs.attrs.find(a=>/wh/i.test(a.unit||"")||/kapasite/i.test(a.name||""));}
+function renderPrice(P,mid,R){
+  const M=P.markets[mid], p=M.p, cur=M.cur, pFmt=v=>isFinite(v)?((cur==="$"||cur==="€")?cur+fmt(v):fmt(v)+" "+cur):"–";
+  const L=M.rows.filter(r=>r.inc&&r.grp==="muadil"&&num(r.price)>0).map(r=>({name:(r.name||"").trim(),ch:r.ch,price:num(r.price)})).sort((a,b)=>a.price-b.price);
+  const cards=$("priceCards"), tb=$("priceTbl"), note=$("priceNote"), svg=$("priceLadder");
+  if(L.length<2){cards.innerHTML='<div><b>–</b><span>Fiyat özeti için en az iki muadil satırında fiyat gerekli.</span></div>'; tb.innerHTML=""; svg.innerHTML=""; note.textContent=""; return;}
+  const prices=L.map(x=>x.price), min=L[0], max=L[L.length-1], avg=prices.reduce((a,b)=>a+b,0)/prices.length, median=med(prices), our=num(p.ourPrice);
+  // TL başına kapasite
+  const ca=capAttr(P); let perCap="";
+  if(ca){ const cap=n=>num((P.specs.vals[vkey(n)]||{})[ca.id]); const oc=cap(OUR);
+    const per=[...new Set(L.map(x=>x.name))].map(n=>{const ps=L.filter(x=>x.name===n).map(x=>x.price), c=cap(n); return c>0?(ps.reduce((a,b)=>a+b,0)/ps.length)/c:NaN;}).filter(isFinite);
+    if(per.length&&oc>0&&our>0){const pa=per.reduce((a,b)=>a+b,0)/per.length, po=our/oc; perCap=`<div><b>${fmt1(po)} ${esc(cur)}/${esc(ca.unit||"birim")}</b><span>Marxlow; muadil ortalaması ${fmt1(pa)} ${esc(cur)}/${esc(ca.unit||"birim")} (${po<=pa?"%"+fmt((1-po/pa)*100)+" daha uygun":"%"+fmt((po/pa-1)*100)+" daha pahalı"})</span></div>`;}}
+  const cheaperThan=our>0?prices.filter(x=>x>our).length/prices.length*100:NaN;
+  // öneri bandı
+  const tech=R.tech, strongT=isFinite(tech)&&tech>15, weakT=isFinite(tech)&&tech<-15, lowB=median*(weakT?0.8:0.9), highB=strongT?Math.max(avg,median):median*(weakT?0.9:1), recP=roundPrice((lowB+highB)/2);
+  cards.innerHTML=`
+    <div><b>${pFmt(min.price,cur)}</b><span>En ucuz: ${esc(min.name)} (${esc(min.ch)})</span></div>
+    <div><b>${pFmt(max.price,cur)}</b><span>En pahalı: ${esc(max.name)} (${esc(max.ch)})</span></div>
+    <div><b>${pFmt(avg,cur)}</b><span>Ortalama · ortanca ${pFmt(median,cur)} · ${L.length} liste fiyatı</span></div>
+    <div><b>${our>0?pFmt(our,cur):"–"}</b><span>Marxlow fiyatı${our>0?` · ortalamadan %${fmt(Math.abs(our/avg-1)*100)} ${our<=avg?"düşük":"yüksek"}; muadil fiyatlarının %${fmt(cheaperThan)}’inden ucuz`:" girilmemiş"}</span></div>
+    ${perCap}
+    <div class="rec"><b>${pFmt(roundPrice(lowB),cur)} – ${pFmt(roundPrice(highB),cur)}</b><span>Önerilen fiyat bandı · orta nokta ${pFmt(recP,cur)}${isFinite(tech)?` · teknik skor ${tech>0?"+":""}${fmt(tech)} (${strongT?"teknik olarak güçlü: bant ortalamaya kadar genişletildi":weakT?"teknik olarak geride: bant aşağı çekildi":"teknik olarak dengeli"})`:""}${our>0&&our<lowB*0.97?` · mevcut fiyat bandın %${fmt((1-our/lowB)*100)} altında; bilinçli agresif bir fiyatsa bu öneriyi bilgi amaçlı okuyun`:our>highB*1.03?` · mevcut fiyat bandın %${fmt((our/highB-1)*100)} üstünde`:""}</span></div>`;
+  // fiyat noktaları
+  const pts=[["En ucuz muadil",min.price],["Öneri bandının alt ucu",roundPrice(lowB)],["Önerilen fiyat",recP],["Ortanca",median],["Ortalama",avg],["Öneri bandının üst ucu",roundPrice(highB)],["En pahalı muadil",max.price]];
+  if(our>0) pts.push(["Mevcut Marxlow fiyatı",our]);
+  const seen=new Set(), list=pts.filter(([,v])=>{const k=Math.round(v); if(seen.has(k)) return false; seen.add(k); return true;}).sort((a,b)=>a[1]-b[1]);
+  tb.innerHTML=list.map(([lab,v])=>{const X=computeAt(P,mid,v), isCur=our>0&&Math.round(v)===Math.round(our), isRec=lab==="Önerilen fiyat";
+    return `<tr class="${isCur?"pcur":""} ${isRec?"prec":""}"><td>${esc(lab)}</td><td class="num"><b>${pFmt(v,cur)}</b></td><td class="num">${v<=avg?"−":"+"}%${fmt(Math.abs(v/avg-1)*100)}</td><td class="num">×${fmt1(Math.round(X.pf*100)/100)}</td><td class="num">${fmt(X.mature.base)}</td><td class="num">${fmt(X.tK)}</td><td class="num">${curFmt(X.tK*v,cur)}</td><td>${isCur?'<span class="hint">mevcut</span>':`<button class="papply" data-v="${Math.round(v)}">Bu fiyatı kullan</button>`}</td></tr>`;}).join("");
+  tb.querySelectorAll(".papply").forEach(b=>b.onclick=()=>{p.ourPrice=+b.dataset.v; const el=document.querySelector('[data-p="ourPrice"]'); if(el) el.value=p.ourPrice; changed(P,mid);});
+  note.textContent=p.priceOn?`Fiyat etkisi, Marxlow fiyatının muadil ortalamasına oranının ${fmt1(p.elast)} üssüdür (0,5–2 arasıyla sınırlı). Bu hassasiyet bir varsayımdır; fiyat değişince satışın gerçekte ne kadar değiştiğini ölçen bir veriniz olursa Varsayımlar’dan güncelleyin. Maliyet girilmediği için tablo adet ve ciroyu gösterir; kârı en yükselten fiyat için maliyetli fiyat analizi sonraki adımda eklenecek.`:"Fiyat konumu etkisi kapalı: fiyat değişince satış adedi değişmez, yalnızca ciro değişir. Varsayımlar’dan açabilirsiniz.";
+  // fiyat haritası
+  const W=900,H=150,pl=30,pr=30,lo=Math.min(min.price,our>0?our:min.price,lowB)*0.95,hi=Math.max(max.price,our>0?our:max.price,highB)*1.05,X=v=>pl+(v-lo)/(hi-lo)*(W-pl-pr);
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.setAttribute("width","100%"); svg.style.minWidth="560px";
+  let s=`<rect x="${X(lowB)}" y="38" width="${Math.max(2,X(highB)-X(lowB))}" height="44" fill="var(--charge)" opacity=".15" rx="4"><title>Önerilen bant</title></rect>`;
+  s+=`<line x1="${pl}" x2="${W-pr}" y1="60" y2="60" stroke="var(--line)" stroke-width="2"/>`;
+  [["Ortalama",avg,"6 4"],["Ortanca",median,"2 3"]].forEach(([n,v,da],i)=>{s+=`<line x1="${X(v)}" x2="${X(v)}" y1="30" y2="90" stroke="var(--muted)" stroke-dasharray="${da}"/><text x="${X(v)}" y="${i?102:24}" text-anchor="middle">${n} ${pFmt(v,cur)}</text>`;});
+  L.forEach(x=>{s+=`<circle cx="${X(x.price)}" cy="60" r="6" fill="var(--ink)" opacity=".55"><title>${esc(x.name)} · ${esc(x.ch)}: ${pFmt(x.price,cur)}</title></circle>`;});
+  s+=`<text x="${X(min.price)}" y="128" text-anchor="start">${pFmt(min.price,cur)}</text><text x="${X(max.price)}" y="128" text-anchor="end">${pFmt(max.price,cur)}</text>`;
+  if(our>0) s+=`<circle cx="${X(our)}" cy="60" r="10" fill="#7c3aed" stroke="#fff" stroke-width="2"><title>Marxlow: ${pFmt(our,cur)}</title></circle><text x="${X(our)}" y="144" text-anchor="middle" style="fill:#7c3aed;font-weight:700">Marxlow ${pFmt(our,cur)}</text>`;
+  svg.innerHTML=s;
+}
+function drawChart(svg,rows,ok){
+  const W=900,H=300,pl=50,pr=12,pt=14,pb=34;
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("width","100%");svg.style.minWidth="560px";
+  if(!ok){svg.innerHTML=`<text x="${W/2}" y="${H/2}" text-anchor="middle">Veri girildiğinde grafik oluşur</text>`;return;}
+  const max=Math.max(...rows.map(r=>Math.max(r.opt,isFinite(r.path)?r.path:0)))*1.08, step=niceStep(max/4), yMax=Math.ceil(max/step)*step;
+  const iw=W-pl-pr, ih=H-pt-pb, bw=iw/rows.length, Y=v=>pt+ih-(v/yMax)*ih; let s="";
+  for(let v=0;v<=yMax+1e-9;v+=step) s+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pl-6}" y="${Y(v)+4}" text-anchor="end">${fmt(v)}</text>`;
+  rows.forEach((r,i)=>{const cx=pl+bw*i+bw/2,w=bw*0.52;
+    s+=`<rect x="${cx-w/2}" y="${Y(r.base)}" width="${w}" height="${Y(0)-Y(r.base)}" rx="3" fill="var(--charge)"><title>${r.label}: ${fmt(r.base)} adet (aralık ${fmt(r.pess)}–${fmt(r.opt)})</title></rect><line x1="${cx}" x2="${cx}" y1="${Y(r.opt)}" y2="${Y(r.pess)}" stroke="var(--amber)" stroke-width="2"/><line x1="${cx-6}" x2="${cx+6}" y1="${Y(r.opt)}" y2="${Y(r.opt)}" stroke="var(--amber)" stroke-width="2"/><line x1="${cx-6}" x2="${cx+6}" y1="${Y(r.pess)}" y2="${Y(r.pess)}" stroke="var(--amber)" stroke-width="2"/><text x="${cx}" y="${H-12}" text-anchor="middle">${r.short}</text>`;});
+  if(rows.every(r=>isFinite(r.path))){const pts=rows.map((r,i)=>`${pl+bw*i+bw/2},${Y(r.path)}`).join(" ");
+    s+=`<polyline points="${pts}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"/>`+rows.map((r,i)=>`<circle cx="${pl+bw*i+bw/2}" cy="${Y(r.path)}" r="4" fill="var(--ink)"><title>${r.label} geçişli senaryo: ${fmt(r.path)} adet</title></circle>`).join("");}
+  svg.innerHTML=s;
+}
+function niceStep(x){if(!(x>0))return 1;const p=Math.pow(10,Math.floor(Math.log10(x)));const f=x/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p;}
+/* ---------- teknik karşılaştırma ---------- */
+function specNames(P,mid,all){
+  const rows=all?P.mOrder.flatMap(m=>P.markets[m].rows):P.markets[mid].rows;
+  const mu=[],ha=[]; rows.forEach(r=>{const n=(r.name||"").trim(); if(!n) return; (r.grp==="muadil"?mu:ha).push(n);});
+  return [...new Set([...mu,...ha])];
+}
+const MARK_CYCLE=["","g","y","r"], MARK_TXT={"":"○ otomatik",g:"● yeşil",y:"● sarı",r:"● kırmızı"};
+function renderSpecs(P,mid){
+  const tbl=$("spec"); if(!tbl) return;
+  const all=$("specAll")&&$("specAll").checked, names=specNames(P,mid,all), S=P.specs;
+  const head=`<thead><tr><th aria-label="Sırala"></th><th>Özellik</th><th>Birim</th><th>Kıyas</th><th class="num">Tolerans %</th><th>Önem</th><th class="our">${esc(P.name)}</th>${names.map(n=>`<th>${esc(n)}</th>`).join("")}<th></th></tr></thead>`;
+  const body=S.attrs.map((a,ai)=>`<tr data-a="${ai}" data-sid="${ai}">
+    <td class="grip" title="Sürükleyerek sırala">⠿</td>
+    <td><input class="aname" data-ak="name" value="${esc(a.name)}" placeholder="Özellik adı"></td>
+    <td><input class="aunit" data-ak="unit" value="${esc(a.unit)}" placeholder="birim"></td>
+    <td><select data-ak="dir"><option value="high" ${a.dir==="high"?"selected":""}>Yüksek iyi</option><option value="low" ${a.dir==="low"?"selected":""}>Düşük iyi</option><option value="none" ${a.dir==="none"?"selected":""}>Elle işaretle</option></select></td>
+    <td class="num"><input class="atol n" type="number" min="0" step="1" data-ak="tol" value="${esc(a.tol)}" ${a.dir==="none"?"disabled":""}></td>
+    <td><select data-ak="w"><option value="1" ${+a.w===1?"selected":""}>Düşük</option><option value="2" ${+a.w===2?"selected":""}>Orta</option><option value="3" ${+a.w===3?"selected":""}>Yüksek</option></select></td>
+    <td class="val our"><input data-v="${OUR}" value="${esc((S.vals[vkey(OUR)]||{})[a.id])}"></td>
+    ${names.map(n=>`<td class="val" data-n="${esc(n)}"><input data-v="${esc(n)}" value="${esc((S.vals[vkey(n)]||{})[a.id])}"><button class="mk" data-mk="${esc(n)}" title="Rengi elle seç: otomatik → yeşil → sarı → kırmızı"></button></td>`).join("")}
+    <td><button class="x" data-delattr="${ai}" aria-label="Özelliği sil">×</button></td></tr>`).join("")||`<tr><td colspan="${8+names.length}" class="empty">Henüz özellik yok. “Özellik ekle” ile başlayın.</td></tr>`;
+  const foot=`<tfoot><tr class="score"><td colspan="6"><b>Teknik skor</b> <span class="hint">(+100 Marxlow her yerde iyi, −100 rakip her yerde iyi)</span></td><td class="our"></td>${names.map(n=>`<td class="num" data-score="${esc(n)}"></td>`).join("")}<td></td></tr></tfoot>`;
+  tbl.innerHTML=head+`<tbody>${body}</tbody>`+foot;
+  tbl.querySelectorAll("tr[data-a]").forEach(tr=>{
+    const a=S.attrs[+tr.dataset.a];
+    tr.querySelectorAll("[data-ak]").forEach(el=>el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{const k=el.dataset.ak; a[k]=el.tagName==="SELECT"&&k==="w"?+el.value:el.value; if(k==="dir"){tr.querySelector('[data-ak="tol"]').disabled=a.dir==="none";} colorSpecs(P,names); changed(P,mid);}));
+    tr.querySelectorAll("[data-v]").forEach(el=>el.addEventListener("input",()=>{const n=vkey(el.dataset.v); (S.vals[n]=S.vals[n]||{})[a.id]=el.value; colorSpecs(P,names); changed(P,mid);}));
+    tr.querySelectorAll("[data-mk]").forEach(b=>b.addEventListener("click",()=>{const key=vkey(b.dataset.mk)+"|"+a.id, cur=S.marks[key]||"", nx=MARK_CYCLE[(MARK_CYCLE.indexOf(cur)+1)%4]; if(nx) S.marks[key]=nx; else delete S.marks[key]; colorSpecs(P,names); changed(P,mid);}));
+  });
+  tbl.querySelectorAll("[data-delattr]").forEach(b=>b.addEventListener("click",()=>{S.attrs.splice(+b.dataset.delattr,1); renderSpecs(P,mid); changed(P,mid);}));
+  colorSpecs(P,names);
+}
+function colorSpecs(P,names){
+  const tbl=$("spec"); if(!tbl) return;
+  tbl.querySelectorAll("tr[data-a]").forEach(tr=>{const a=P.specs.attrs[+tr.dataset.a];
+    tr.querySelectorAll("td[data-n]").forEach(td=>{const n=td.dataset.n, m=specMark(P,a,n), man=P.specs.marks[vkey(n)+"|"+a.id];
+      td.classList.remove("m-g","m-y","m-r"); if(m) td.classList.add("m-"+m);
+      const b=td.querySelector(".mk"); b.textContent=man?"●":"○"; b.title=(man?"Elle işaretli: "+MARK_TXT[man]:"Otomatik"+(m?" ("+MARK_TXT[m].slice(2)+")":""))+". Tıklayınca değişir: otomatik → yeşil → sarı → kırmızı.";});});
+  names.forEach(n=>{const td=[...tbl.querySelectorAll("td[data-score]")].find(x=>x.dataset.score===n); if(!td) return; const s=techScoreOf(P,n); td.innerHTML=isFinite(s)?`<b>${s>0?"+":""}${fmt(s)}</b>`:"–"; td.className="num "+(isFinite(s)?(s>15?"m-g":s<-15?"m-r":"m-y"):"");});
+}
+
+/* ---------- yönetici özeti (ürün) ---------- */
+function productSummaryHTML(P){
+  const today=NOW.toLocaleDateString("tr-TR",{day:"numeric",month:"long",year:"numeric"});
+  const RsAll=P.mOrder.map(mid=>compute(P,mid)), Rs=RsAll.filter(R=>isSales(R.M)), Rref=RsAll.filter(R=>!isSales(R.M)), S0=Rs[0];
+  const block=R=>{const c=R.M.cur; return `<div class="kpi-block"><h3>${esc(R.M.label)}</h3><div class="summary">
+    <div><b>${fmt(R.market)}</b><span>Toplam pazar, aylık adet</span></div><div><b>${fmt(R.muadil)}</b><span>Bunun muadil segmenti, aylık adet</span></div>
+    <div><b>${fmt(R.mature.base)}</b><span>Marxlow baz, aylık adet (olgun dönem)</span></div><div><b>${fmt(R.tB)}</b><span>Marxlow ilk 12 ay, adet (aralık ${fmt(R.tP)}–${fmt(R.tO)})</span></div>
+    <div><b>${curFmt(R.tB*R.price,c)}</b><span>Marxlow ilk 12 ay baz ciro</span></div>${R.pathOn?`<div><b>${fmt(R.tPath)}</b><span>Geçişli senaryo ilk 12 ay, adet (${curFmt(R.tPath*R.price,c)})</span></div>`:""}<div><b>${fmt(R.tK)}</b><span>Karma senaryo ilk 12 ay, adet (${curFmt(R.tK*R.price,c)})</span></div></div></div>`;};
+  const F=[];
+  Rs.forEach(R=>{const L=R.M.label,c=R.M.cur, ld=R.list[0];
+    if(ld) F.push(`${esc(L)}: ölçülen pazarın lideri ${esc(ld[0])}, payı yaklaşık %${fmt(ld[1].u/R.measured*100)}.`);
+    if(isFinite(R.avgPrice)&&R.price>0){const d=(R.price/R.avgPrice-1)*100; F.push(`${esc(L)}: Marxlow fiyatı muadil ortalamasından %${fmt(Math.abs(d))} ${d<=0?"düşük":"yüksek"} (${curFmt(R.price,c)} / ${curFmt(R.avgPrice,c)}).`);}
+    const up=R.list.filter(([,b])=>/Yükselişte/.test(b.trend)).map(([n])=>esc(n)), dn=R.list.filter(([,b])=>/Düşüşte/.test(b.trend)).map(([n])=>esc(n));
+    if(up.length) F.push(`${esc(L)}: yükselişte görünen ürünler: ${up.join(", ")}.`); if(dn.length) F.push(`${esc(L)}: son dönemde yavaşlayan ürünler: ${dn.join(", ")}.`);
+    const n=R.confN, good=(n.strong||0)+(n.ok||0), weak=(n.lo||0)+(n.estdate||0);
+    F.push(`${esc(L)} veri kalitesi: ${good} satır güçlü veya makul veriye, ${weak} satır zayıf ya da tahmini tarihe dayanıyor${n.clash?`; ${n.clash} satırda sinyaller çelişiyor`:""}${n.na?`; ${n.na} satırda henüz veri yok`:""}${n.edited?`; ${n.edited} satırda editör çarpanı uygulanmış`:""}.`);});
+  // teknik özet
+  const names=specNames(P,null,true).filter(n=>P.mOrder.some(m=>P.markets[m].rows.some(r=>r.grp==="muadil"&&(r.name||"").trim()===n)));
+  const strong=[],weak=[];
+  P.specs.attrs.forEach(a=>{const ms=names.map(n=>specMark(P,a,n)).filter(Boolean); if(!ms.length) return; const g=ms.filter(m=>m==="g").length, r=ms.filter(m=>m==="r").length;
+    if(g>r&&g>=ms.length/2) strong.push(a.name); else if(r>g&&r>=ms.length/2) weak.push(a.name);});
+  if(strong.length) F.push(`Teknik: Marxlow muadillerin çoğuna göre şu özelliklerde önde: ${strong.map(esc).join(", ")}.`);
+  if(weak.length) F.push(`Teknik: muadillerin çoğu şu özelliklerde Marxlow’dan iyi: ${weak.map(esc).join(", ")}.`);
+  const comp=R=>`<h3 class="sub">${esc(R.M.label)}</h3><div class="panel scroll"><table><thead><tr><th>Ürün</th><th>Tablo</th><th class="num">Satış / ay</th><th class="num">Pay</th><th>Trend</th><th class="num">Teknik skor</th></tr></thead><tbody>${R.list.slice(0,6).map(([n,b])=>{const s=techScoreOf(P,n);return `<tr><td>${esc(n)}</td><td>${b.grp==="muadil"?"Muadil":"Hacim"}</td><td class="num">${fmt(b.u)}</td><td class="num">%${fmt(b.u/R.measured*100)}</td><td>${b.trend||"–"}</td><td class="num">${isFinite(s)?(s>0?"+":"")+fmt(s):"–"}</td></tr>`;}).join("")||'<tr><td colspan="6">Veri yok</td></tr>'}</tbody></table></div>`;
+  const asm=R=>{const p=R.M.p,c=R.M.cur; return `<p class="lede"><b>${esc(R.M.label)}:</b> yorum bırakma oranı %${fmt1(R.cal.rate*100)}, ölçülen verinin pazardaki payı %${fmt1(p.coverage)}, Marxlow pay senaryoları %${fmt1(p.sharePess)} / %${fmt1(p.shareBase)} / %${fmt1(p.shareOpt)}, fiyat ${curFmt(R.price,c)}, satış başlangıcı ${esc(p.start)}, yıllık pazar büyümesi %${fmt1(hasNum(p.growth)?num(p.growth):0)}, mevsimsellik ${p.season?"açık":"kapalı"}, fiyat konumu etkisi ${p.priceOn?"açık":"kapalı"}, teknik üstünlük etkisi ${p.techOn?"açık":"kapalı"}.</p>`;};
+  return `<section><h2>Yönetici özeti: ${esc(P.name)}</h2><p class="lede">${today} itibarıyla tablolardaki verilerden otomatik oluşturulur; veriler değiştikçe güncellenir.</p>${Rs.map(block).join("")}</section>
+   <section><h2>Öne çıkan bulgular</h2><div class="panel findings">${F.map(f=>`<p>${f}</p>`).join("")||"<p>Henüz bulgu yok.</p>"}</div></section>
+   <section><h2>Rekabet</h2>${Rs.map(comp).join("")}</section>
+   ${Rref.length?`<section><h2>Referans pazarlar</h2><p class="lede">Bu pazarlarda Marxlow satışı öngörülmez; pazar büyüklüğü ve rekabet satış pazarıyla kıyas için verilmiştir.</p><div class="panel scroll"><table><thead><tr><th>Pazar</th><th class="num">Toplam pazar / ay</th><th class="num">${S0?esc(S0.M.label)+"’nin katı":"Kıyas"}</th><th>Lider ürün</th><th class="num">Lider payı</th></tr></thead><tbody>${Rref.map(R=>{const ld=R.list[0]; return `<tr><td>${esc(R.M.label)}</td><td class="num">${fmt(R.market)}</td><td class="num">${S0&&S0.market>0?"×"+fmt1(R.market/S0.market):"–"}</td><td>${ld?esc(ld[0]):"–"}</td><td class="num">${ld?"%"+fmt(ld[1].u/R.measured*100):"–"}</td></tr>`;}).join("")}</tbody></table></div></section>`:""}
+   <section><h2>Temel varsayımlar</h2>${Rs.map(asm).join("")}<p class="lede">Tahminler pazaryerlerinin yayınladığı yorum, soru, favori, sepet ve satış rozeti sinyallerinden türetilir; kesin satış verisi değildir.</p></section>`;
+}
+
+/* ---------- genel bakış (portföy) ---------- */
+function portfolioHTML(){
+  const rows=[], totals={};
+  const refs=[];
+  APP.order.forEach(pid=>{const P=APP.products[pid]; P.mOrder.forEach(mid=>{const R=compute(P,mid), c=R.M.cur, ciro=R.tB*R.price; if(!isSales(R.M)){refs.push({pid,mid,P,R}); return;}
+    rows.push({pid,mid,P,R}); const t=totals[c]=totals[c]||{ciro:0,adet:0,path:0,k:0,ka:0}; if(isFinite(R.tK*R.price)) t.k+=R.tK*R.price; if(isFinite(R.tK)) t.ka+=R.tK; if(isFinite(ciro)) t.ciro+=ciro; if(isFinite(R.tB)) t.adet+=R.tB; if(isFinite(R.tPath*R.price)) t.path+=R.tPath*R.price;});});
+  const tb=rows.map(({pid,mid,P,R})=>`<tr><td><button class="linkbtn" data-go="${esc(pid)}--${esc(mid)}">${esc(P.name)}</button></td><td>${esc(R.M.label)}</td><td class="num">${fmt(R.market)}</td><td class="num">${fmt(R.mature.base)}</td><td class="num">${fmt(R.tB)}</td><td class="num">${fmt(R.tP)}–${fmt(R.tO)}</td><td class="num">${fmt(R.tPath)}</td><td class="num"><b>${fmt(R.tK)}</b></td><td class="num">${curFmt(R.tB*R.price,R.M.cur)}</td><td class="num">${curFmt(R.tK*R.price,R.M.cur)}</td><td class="num">${isFinite(R.tech)?(R.tech>0?"+":"")+fmt(R.tech):"–"}</td></tr>`).join("");
+  return `<section><h2>Genel bakış</h2><p class="lede">Tüm ürünlerin tüm pazarlardaki özeti. Ürün adına tıklayınca o ürünün ilgili pazarına gidersiniz. Ciro toplamları para birimine göre ayrıdır.</p>
+   <div class="summary">${Object.entries(totals).map(([c,t])=>`<div><b>${curFmt(t.ciro,c)}</b><span>İlk 12 ay baz ciro toplamı (${esc(c)}) · ${fmt(t.adet)} adet</span></div><div><b>${curFmt(t.k,c)}</b><span>İlk 12 ay karma ciro toplamı (${esc(c)}) · ${fmt(t.ka)} adet</span></div>`).join("")||"<div><b>–</b><span>Henüz veri yok</span></div>"}</div>
+   <div class="panel scroll port" style="margin-top:16px"><table><thead><tr><th>Ürün</th><th>Pazar</th><th class="num">Toplam pazar / ay</th><th class="num">Marxlow baz / ay</th><th class="num">İlk 12 ay baz adet</th><th class="num">Aralık</th><th class="num">Geçişli 12 ay</th><th class="num">Karma 12 ay</th><th class="num">İlk 12 ay baz ciro</th><th class="num">Karma ciro</th><th class="num">Teknik skor</th></tr></thead><tbody>${tb||'<tr><td colspan="11">Henüz ürün yok. “+ Ürün” ile başlayın.</td></tr>'}</tbody></table></div></section>`+(refs.length?`<section><h2>Referans pazarlar</h2><p class="lede">Marxlow satışı öngörülmeyen, yalnızca pazar hacmi ve rekabeti görmek için izlenen pazarlar. Ciro toplamlarına dahil değildir.</p><div class="panel scroll port"><table><thead><tr><th>Ürün</th><th>Pazar</th><th class="num">Toplam pazar / ay</th><th class="num">Muadil segmenti / ay</th><th>Lider ürün</th><th class="num">Lider payı</th></tr></thead><tbody>${refs.map(({pid,mid,P,R})=>{const ld=R.list[0]; return `<tr><td><button class="linkbtn" data-go="${esc(pid)}--${esc(mid)}">${esc(P.name)}</button></td><td>${esc(R.M.label)}</td><td class="num">${fmt(R.market)}</td><td class="num">${fmt(R.muadil)}</td><td>${ld?esc(ld[0]):"–"}</td><td class="num">${ld?"%"+fmt(ld[1].u/R.measured*100):"–"}</td></tr>`;}).join("")}</tbody></table></div></section>`:"");
+}
+function bindPortfolio(){document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{const [pid,mid]=b.dataset.go.split("--"); APP.ui.pid=pid; APP.ui.tab=mid; saveLocal(); renderView();});}
+/* ---------- ortak veri senkronu ---------- */
+const stable=v=>Array.isArray(v)?"["+v.map(stable).join(",")+"]":(v&&typeof v==="object")?"{"+Object.keys(v).sort().map(k=>JSON.stringify(k)+":"+stable(v[k])).join(",")+"}":JSON.stringify(v);
+const FK=["link","price","rating","rev","recentRev","qa","fav","cart","badge","badgeDays","date","mult","note","name"];
+const rowsArr=M=>!M?[]:Array.isArray(M.rows)?M.rows:Object.values(M.rows||{}).filter(Boolean);
+function filled1(P){let n=0; if(!P) return 0; Object.values(P.markets||{}).forEach(M=>rowsArr(M).forEach(r=>FK.forEach(k=>{if(String(r[k]??"").trim()!=="")n++;}))); Object.values((P.specs&&P.specs.vals)||{}).forEach(o=>Object.values(o).forEach(v=>{if(String(v??"").trim()!=="")n++;})); return n;}
+function filledAll(prods){return Object.values(prods||{}).reduce((a,P)=>a+filled1(P),0);}
+let DBH=null, canWrite=true, synced=false, mode="local", metaKey="", metaOrder=null, lastAutoBackup=0, lastSaved=null;
+let dbTried=false, preSyncEdits=false;
+const base={}, latest={}, legacy={}, timers={}, writing={}, again={}, needRender={};
+let metaTimer=null;
+function setStatus(kind){
+  if(!["saving","error","conflict","connecting"].includes(kind)) mode=kind;
+  const el=$("syncStatus"), map={local:"Yalnızca bu tarayıcıda",connecting:"Ortak veriye bağlanıyor…",unshared:"Henüz ekiple paylaşılmadı",shared:"Ekiple senkron",saving:"Kaydediliyor…",readonly:"Salt okunur: değişiklikleriniz kaydedilmez",error:"Senkron hatası, yerelde saklanıyor",conflict:"Karar bekleniyor"};
+  el.textContent=(map[kind]||kind)+(kind==="shared"&&lastSaved?` · son kayıt ${lastSaved.toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"})}`:""); el.dataset.kind=kind; $("shareBtn").hidden=!(kind==="unshared"&&canWrite);
+  if(typeof updateWarn==="function") updateWarn();
+}
+/* Alan bazında birleştirme: iki sekme aynı ürünü düzenlese de birbirinin değişikliğini ezmez */
+const isObj=v=>v&&typeof v==="object"&&!Array.isArray(v);
+const idArr=a=>Array.isArray(a)&&a.every(x=>isObj(x)&&x.id);
+function merge3(b,l,r){
+  const sb=stable(b), sl=stable(l), sr=stable(r);
+  if(sl===sb) return clone(r); if(sr===sb||sr===sl) return clone(l);
+  if(idArr(l)&&idArr(r)&&(b===undefined||idArr(b))) return mergeById(b||[],l,r);
+  if(isObj(l)&&isObj(r)){const bb=isObj(b)?b:{}, out={}; new Set([...Object.keys(l),...Object.keys(r),...Object.keys(bb)]).forEach(k=>{const v=merge3(bb[k],l[k],r[k]); if(v!==undefined) out[k]=v;}); return out;}
+  return clone(l);
+}
+function mergeById(b,l,r){
+  const B=new Map(b.map(x=>[x.id,x])), L=new Map(l.map(x=>[x.id,x])), R=new Map(r.map(x=>[x.id,x]));
+  const lOrd=stable(l.map(x=>x.id).filter(id=>B.has(id)))!==stable(b.map(x=>x.id).filter(id=>L.has(id)));
+  const order=(lOrd?l:r).map(x=>x.id); (lOrd?r:l).forEach(x=>{if(!order.includes(x.id)) order.push(x.id);});
+  const out=[];
+  order.forEach(id=>{const inB=B.has(id),inL=L.has(id),inR=R.has(id);
+    if(inB&&!inL) return;                                   // yerelde silinmiş
+    if(inB&&!inR){ if(inL&&stable(L.get(id))!==stable(B.get(id))) out.push(clone(L.get(id))); return; } // uzakta silinmiş (yerelde değişmediyse)
+    if(inL&&inR) out.push(merge3(B.get(id),L.get(id),R.get(id))); else if(inL) out.push(clone(L.get(id))); else if(inR) out.push(clone(R.get(id)));});
+  return out;
+}
+/* Nesneyi yerinde günceller: ekrandaki alanların bağlı olduğu satır nesneleri korunur */
+function assignDeep(t,s){
+  Object.keys(t).forEach(k=>{if(!(k in s)) delete t[k];});
+  Object.keys(s).forEach(k=>{const a=t[k], b=s[k];
+    if(idArr(a)&&idArr(b)){const m=new Map(a.map(x=>[x.id,x])); t[k]=b.map(x=>{const o=m.get(x.id); if(o){assignDeep(o,x); return o;} return clone(x);});}
+    else if(isObj(a)&&isObj(b)) assignDeep(a,b); else t[k]=clone(b);});
+  return t;
+}
+const dirty=pid=>APP.products[pid]&&stable(APP.products[pid])!==stable(base[pid]);
+function commitProduct(pid){saveLocal(); if(!synced) preSyncEdits=true; updateWarn(); if(mode!=="shared"||!canWrite||!synced) return; clearTimeout(timers[pid]); $("syncStatus").textContent="Kaydedilmemiş değişiklik…"; $("syncStatus").dataset.kind="pending"; timers[pid]=setTimeout(()=>{delete timers[pid]; flush(pid);},1200);}
+function updateWarn(){
+  const w=$("warnBar"); if(!w) return;
+  if(!window.claude){w.hidden=true;return;}            // bağımsız dosya: veri bu bilgisayarda saklanır
+  if(!DBH){ if(dbTried){w.hidden=false; w.textContent="Bu görünüm ortak tabloya bağlanamadı; girdiğiniz veriler yalnızca bu tarayıcıda kalır. Sayfayı yenileyin; düzelmezse tabloyu claude.ai üzerinden açın.";} else w.hidden=true; return; }
+  if(!synced){ w.hidden=!preSyncEdits; if(preSyncEdits) w.textContent="Ortak tabloya bağlanılıyor… Bu sırada girdiğiniz veriler bu tarayıcıda tutulur ve bağlantı kurulunca otomatik olarak ortak tabloya eklenir."; return;}
+  let msg="", btn=null;
+  if(mode==="unshared"){msg="Bu tablo henüz ekiple paylaşılmadı; değişiklikleriniz yalnızca bu tarayıcıda saklanıyor."; btn=["Ekiple paylaş",()=>$("shareBtn").click()];}
+  else if(mode==="readonly"||!canWrite){msg="Bu tabloda düzenleme yetkiniz yok; yaptığınız değişiklikler ortak tabloya kaydedilmez.";}
+  else if($("syncStatus").dataset.kind==="conflict"){msg="Bu sekme ortak veriyle henüz eşleşmedi; yukarıdaki seçimi yapana kadar değişiklikler ortak tabloya gitmez.";}
+  else if($("syncStatus").dataset.kind==="error"){msg="Ortak tabloya kaydedilemiyor (bağlantı sorunu). Değişiklikleriniz şimdilik bu tarayıcıda; “Girilen verileri kaydet” ile tekrar deneyin.";}
+  else if(mode!=="shared"&&synced){msg="Bu sekme ortak tabloya bağlı değil; değişiklikleriniz yalnızca bu tarayıcıda saklanıyor.";}
+  w.hidden=!msg; w.innerHTML=""; if(!msg) return; const s=document.createElement("span"); s.textContent=msg; w.appendChild(s);
+  if(btn){const b=document.createElement("button"); b.textContent=btn[0]; b.onclick=btn[1]; w.appendChild(b);}
+}
+async function waitIdle(pid){for(let i=0;i<100&&writing[pid];i++) await new Promise(r=>setTimeout(r,60));}
+async function saveNow(){
+  const info=t=>document.querySelectorAll(".saveinfo").forEach(s=>{s.textContent=t;});
+  const time=()=>new Date().toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+  saveLocal();
+  if(!window.claude||!DBH){info(`Bu bilgisayarda kaydedildi (${time()}). Başkasıyla paylaşmak için “Dışa aktar”ı kullanın.`); return;}
+  if(mode!=="shared"||!canWrite||!synced){updateWarn(); info("Kaydedilemedi: bu sekme ortak tabloya bağlı değil. Üstteki uyarıya bakın."); return;}
+  info("Kaydediliyor…");
+  try{
+    for(const pid of APP.order){ if(timers[pid]){clearTimeout(timers[pid]); delete timers[pid];} await waitIdle(pid); await flush(pid); await waitIdle(pid); }
+    await flushMeta();
+    // sunucudan geri okuyup doğrula
+    let ok=true; const bad=[];
+    for(const pid of APP.order){ const s=await DBH.doc("products/"+pid).get(); if(!s.exists){ok=false;bad.push(APP.products[pid].name);continue;}
+      const D=normalize(fromServer(s.data())), L=APP.products[pid];
+      const pick=P=>P.mOrder.map(m=>({m,p:P.markets[m].p,rows:P.markets[m].rows})).concat([{specs:P.specs,name:P.name}]);
+      if(stable(pick(D))!==stable(pick(L))){ok=false;bad.push(L.name);} }
+    serverBackup("Elle kaydetme ("+time()+")","all",{order:APP.order.slice(),products:APP.products});
+    info(ok?`Kaydedildi ve ortak tabloda doğrulandı ✓ (${time()})`:`Kaydedildi ama ${bad.join(", ")} için ortak tablodaki kayıt farklı görünüyor; başka biri aynı anda değiştirmiş olabilir. Sayfayı yenileyip kontrol edin.`);
+    setStatus("shared");
+  }catch(e){ setStatus("error"); updateWarn(); info("Kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin; değişiklikleriniz bu tarayıcıda duruyor."); }
+}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".saveNow"); if(b) saveNow();});
+window.addEventListener("beforeunload",e=>{ if(mode==="shared"&&(Object.keys(timers).length||APP.order.some(pid=>dirty(pid)))){e.preventDefault(); e.returnValue="";} });
+function commitMeta(){saveLocal(); if(mode!=="shared"||!canWrite||!synced) return; clearTimeout(metaTimer); metaTimer=setTimeout(()=>{metaTimer=null; flushMeta();},600);}
+async function flush(pid){
+  if(!DBH||mode!=="shared"||!canWrite||!synced) return; const P=APP.products[pid]; if(!P) return;
+  if(writing[pid]){again[pid]=true;return;}
+  const srv=latest[pid]; if(!dirty(pid)&&srv) return;
+  const local=clone(P);
+  writing[pid]=true; $("syncStatus").textContent="Kaydediliyor…";
+  try{
+    if(srv&&filled1(local)<filled1(srv)-3){localBackup("“"+P.name+"” ürününde veri azalmadan önce","product",{pid,product:srv}); await serverBackup("“"+P.name+"” ürününde veri azalmadan önce","product",{pid,product:srv});}
+    else if(Date.now()-lastAutoBackup>3*60*1000){lastAutoBackup=Date.now(); backupAll("Otomatik yedek",true);}
+    if(!srv||legacy[pid]){ await DBH.doc("products/"+pid).set(toServer(srv?merge3(base[pid],local,srv):local)); legacy[pid]=false; }
+    else { const patch=patchOf(toServer(base[pid]),toServer(local)); if(patch) await DBH.doc("products/"+pid).update(patch); }
+    base[pid]=local; saveLocal(); lastSaved=new Date();
+    setStatus("shared");
+  }catch(e){const c=e&&e.code; if(c==="invalid_argument"&&JSON.stringify(local).length<250000){canWrite=false;setStatus("readonly");} else if(c==="revoked"||c==="not_granted"){canWrite=false;setStatus("local");} else setStatus("error");}
+  writing[pid]=false; if(again[pid]){again[pid]=false; flush(pid);}
+}
+async function flushMeta(){
+  if(!DBH||mode!=="shared"||!canWrite||!synced) return; const body={order:APP.order.slice()}, key=stable(body); if(key===metaKey) return;
+  try{await DBH.doc("meta/index").set(body); metaKey=key; metaOrder=body.order;}catch(e){}
+}
+function removeProductRemote(pid){ if(DBH&&mode==="shared"&&canWrite){DBH.doc("products/"+pid).delete().catch(()=>{}); delete base[pid]; delete latest[pid];} }
+function editingIn(pid){const a=document.activeElement; return (APP.ui.pid===pid||APP.ui.pid==="__all__")&&a&&a.closest&&a.closest("#view")&&/INPUT|SELECT|TEXTAREA/.test(a.tagName);}
+function mergeOrder(){const b=(metaOrder||[]).filter(id=>APP.products[id]); APP.order.forEach(id=>{if(!b.includes(id)&&APP.products[id]) b.push(id);}); Object.keys(APP.products).forEach(id=>{if(!b.includes(id)) b.push(id);}); APP.order=b;}
+function redraw(pid){ if(APP.ui.pid!==pid&&APP.ui.pid!=="__all__"){renderNav();return;} if(editingIn(pid)){needRender[pid]=true;return;} renderView(); }
+document.addEventListener("focusout",()=>setTimeout(()=>{Object.keys(needRender).forEach(pid=>{if(!editingIn(pid)){delete needRender[pid]; if(APP.ui.pid===pid||APP.ui.pid==="__all__") renderView();}});},80));
+function onRemoteProduct(pid,data){
+  legacy[pid]=isLegacy(data); const D=normalize(fromServer(data)); latest[pid]=clone(D);
+  if(base[pid]&&stable(D)===stable(base[pid])) return;          // kendi yazdığımızın yankısı
+  if(APP.products[pid]&&stable(D)===stable(APP.products[pid])){ base[pid]=clone(D); return; } // ekrandakiyle aynı: yeniden çizmeye gerek yok
+  if(!APP.products[pid]){APP.products[pid]=D; base[pid]=clone(D); mergeOrder(); saveLocal(); renderView(); return;}
+  const P=APP.products[pid];
+  if(!dirty(pid)){ assignDeep(P,D); base[pid]=clone(D); saveLocal(); redraw(pid); return; }
+  // bu sekmede kaydedilmemiş değişiklik var: alan bazında birleştir, sonra birleşik hali yaz
+  const merged=merge3(base[pid],P,D); assignDeep(P,merged); base[pid]=clone(D); saveLocal(); redraw(pid); commitProduct(pid);
+}
+async function initSync(){
+  if(!window.claude||!window.claude.use) return;
+  let db=null; try{db=await window.claude.use("db");}catch(e){}
+  dbTried=true;
+  if(!db){setStatus("local");return;}
+  DBH=db; setStatus("connecting");
+  try{const user=await window.claude.use("user"); if(user&&user.can){const w=await user.can("data.write"); if(w===false) canWrite=false;}}catch(e){}
+  let gotMeta=false, gotProds=false, metaData=null, docs=[];
+  const tryInit=()=>{ if(synced||!gotMeta||!gotProds) return; firstSync(metaData,docs); };
+  db.doc("meta/index").onSnapshot(s=>{const d=s.exists?s.data():null;
+    if(!synced){gotMeta=true; metaData=d; tryInit(); return;}
+    if(d){metaKey=stable({order:d.order}); metaOrder=(d.order||[]).slice(); mergeOrder(); saveLocal(); renderNav();}
+  },()=>setStatus("error"));
+  db.collection("products").onSnapshot(qs=>{
+    if(!synced){gotProds=true; docs=qs.docs.map(d=>({id:d.id,data:d.data()})); tryInit(); return;}
+    qs.docChanges().forEach(ch=>{const pid=ch.doc.id;
+      if(ch.type==="removed"){ if(APP.products[pid]){ if(dirty(pid)) localBackup("“"+APP.products[pid].name+"” başka bir sekmede silinmeden önce","product",{pid,product:clone(APP.products[pid])});
+        delete APP.products[pid]; delete base[pid]; delete latest[pid]; APP.order=APP.order.filter(x=>x!==pid); if(APP.ui.pid===pid) APP.ui.pid=APP.order[0]||"__all__"; saveLocal(); renderView();} return;}
+      onRemoteProduct(pid,ch.doc.data());});
+    setStatus(canWrite?"shared":"readonly");
+  },()=>setStatus("error"));
+}
+/* Ortak tabloda olmayan yerel verileri asla sessizce atma: önce birleştir */
+function additiveMerge(lp,rp,log){ // taban bilinmiyorsa: ortak veri esas, yereldeki ek satır ve dolu hücreler eklenir
+  const out=clone(rp);
+  Object.keys(lp.markets||{}).forEach(mid=>{const L=lp.markets[mid], R=out.markets[mid];
+    if(!R){out.markets[mid]=clone(L); if(!out.mOrder.includes(mid)) out.mOrder.push(mid); log.rows+=(L.rows||[]).length; return;}
+    (L.rows||[]).forEach(lr=>{const rr=R.rows.find(x=>x.id===lr.id)||R.rows.find(x=>(x.name||"").trim()===(lr.name||"").trim()&&x.ch===lr.ch&&(x.name||"").trim());
+      if(!rr){ if((lr.name||"").trim()||FK.some(k=>String(lr[k]??"").trim()!=="")){R.rows.push(clone(lr)); log.rows++; log.names.push(lr.name||"(adsız)");} return; }
+      Object.keys(lr).forEach(k=>{ if(k==="id") return; const lv=String(lr[k]??"").trim(), rv=String(rr[k]??"").trim(); if(lv!==""&&rv===""){rr[k]=lr[k]; log.cells++;} else if(lv!==""&&rv!==""&&lv!==rv&&FK.includes(k)) log.conflicts.push(`${lr.name} (${lr.ch}) · ${k}: ortak tabloda “${rv}”, bu tarayıcıda “${lv}”`); });});});
+  const LS=lp.specs||{}, RS=out.specs;
+  (LS.attrs||[]).forEach(a=>{if(!RS.attrs.find(x=>x.id===a.id)){RS.attrs.push(clone(a)); log.cells++;}});
+  Object.entries(LS.vals||{}).forEach(([n,o])=>{RS.vals[n]=RS.vals[n]||{}; Object.entries(o||{}).forEach(([k,v])=>{if(String(v??"").trim()!==""&&String(RS.vals[n][k]??"").trim()===""){RS.vals[n][k]=v; log.cells++;}});});
+  Object.entries(LS.marks||{}).forEach(([k,v])=>{if(!RS.marks[k]){RS.marks[k]=v;}});
+  return out;
+}
+function firstSync(metaData,docs){
+  synced=true;
+  if(!metaData&&!docs.length){setStatus(canWrite?"unshared":"readonly"); return;}
+  let savedBase={}; try{savedBase=JSON.parse(localStorage.getItem(KEY+"-base")||"{}")||{};}catch(e){}
+  const rp={}; docs.forEach(d=>{rp[d.id]=normalize(fromServer(d.data)); base[d.id]=clone(rp[d.id]); latest[d.id]=clone(rp[d.id]); legacy[d.id]=isLegacy(d.data);});
+  metaOrder=(metaData&&metaData.order)||docs.map(d=>d.id); metaKey=stable({order:metaOrder});
+  const before={order:APP.order.slice(),products:clone(APP.products)};
+  const log={rows:0,cells:0,names:[],conflicts:[],merged:[]};
+  const next={};
+  Object.keys(rp).forEach(pid=>{const R=rp[pid], Lp=APP.products[pid], B=savedBase[pid];
+    if(!HAD_LOCAL||!Lp||stable(Lp)===stable(R)){next[pid]=R; return;}   // bu tarayıcıda kayıtlı yerel veri yoksa (ilk açılış) doğrudan ortak veri
+    if(B){ const m=normalize(merge3(normalize(clone(B)),Lp,R)); if(stable(m)!==stable(R)) log.merged.push(m.name||pid); next[pid]=m; }   // üç yönlü: kaydedilmemiş yerel değişiklikler korunur
+    else { const m=normalize(additiveMerge(Lp,R,log)); if(stable(m)!==stable(R)) log.merged.push(m.name||pid); next[pid]=m; }
+  });
+  if(HAD_LOCAL) Object.keys(APP.products).forEach(pid=>{ if(rp[pid]) return; if(savedBase[pid]) return; /* başka yerde silinmiş */ next[pid]=APP.products[pid]; log.merged.push(APP.products[pid].name||pid); }); // hiç paylaşılmamış yerel ürün
+  if(log.merged.length) localBackup("Ortak veriyle birleştirilmeden önce bu tarayıcıdaki veri","all",before);
+  APP.products=next; APP.order=metaOrder.filter(id=>next[id]); Object.keys(next).forEach(id=>{if(!APP.order.includes(id)) APP.order.push(id);});
+  saveLocal(); setStatus(canWrite?"shared":"readonly"); renderView();
+  if(log.merged.length&&canWrite){
+    APP.order.forEach(pid=>{ if(dirty(pid)||!latest[pid]) commitProduct(pid); }); commitMeta();
+    const parts=[]; if(log.rows) parts.push(`${log.rows} satır (${[...new Set(log.names)].slice(0,6).join(", ")})`); if(log.cells) parts.push(`${log.cells} dolu hücre`);
+    notice(`Bu tarayıcıda ortak tabloya henüz kaydedilmemiş veriler bulundu ve ortak tabloya eklendi: ${log.merged.join(", ")}${parts.length?" · "+parts.join(", "):""}.${log.conflicts.length?` ${log.conflicts.length} hücrede iki taraf farklıydı; ortak tablodaki değer korundu: ${log.conflicts.slice(0,4).join("; ")}${log.conflicts.length>4?"…":""}.`:""} Önceki hal “Yedekler”de duruyor.`,[["Tamam",()=>notice(""),true]]);
+  }
+}
+/* Bekçi: kaydedilmemiş değişiklik kalmasın; bağlantı sorunlarında tekrar dener */
+setInterval(()=>{ if(!synced||mode!=="shared"||!canWrite) return; APP.order.forEach(pid=>{ if(dirty(pid)&&!timers[pid]&&!writing[pid]) flush(pid); }); },20000);
+$("shareBtn").addEventListener("click",()=>{setStatus("shared"); APP.order.forEach(id=>flush(id)); flushMeta();});
+
+/* ---------- yedekler ---------- */
+const BAK=KEY+"-bak";
+function localBackups(){try{return JSON.parse(localStorage.getItem(BAK)||"[]");}catch(e){return [];}}
+function localBackup(label,kind,data){try{const a=localBackups(); const d=clone(data); if(a[0]&&a[0].kind===kind&&stable(a[0].data)===stable(d)) return; a.unshift({t:Date.now(),label,kind,data:d}); localStorage.setItem(BAK,JSON.stringify(a.slice(0,12)));}catch(e){}}
+async function serverBackup(label,kind,data){ if(!DBH||!canWrite||mode==="unshared"||mode==="local") return; try{const t=Date.now(); await DBH.collection("backups").doc("v8-"+t).set({t,label,kind,data:clone(data)}); pruneBackups();}catch(e){} }
+async function pruneBackups(){try{const q=await DBH.collection("backups").orderBy("t","desc").get(); for(const d of q.docs.slice(40)) await DBH.collection("backups").doc(d.id).delete();}catch(e){}}
+async function backupAll(label,serverOnly){const d={order:APP.order.slice(),products:APP.products}; if(!serverOnly) localBackup(label,"all",d); await serverBackup(label,"all",d);}
+function bkInfo(b){ if(b.kind==="product") return {what:"Ürün: "+((b.data.product&&b.data.product.name)||b.data.pid), n:filled1(b.data.product)};
+  if(b.kind==="all") return {what:"Tüm ürünler ("+Object.keys(b.data.products||{}).length+")", n:filledAll(b.data.products)};
+  if(b.tr&&b.us) return {what:"Eski tek ürünlü sürüm (Marxlow 300W Pro)", n:filledAll({x:{markets:{tr:b.tr,us:b.us}}})}; return {what:"Bilinmeyen biçim",n:0}; }
+async function openBackups(){
+  const panel=$("backupPanel"); panel.hidden=false;
+  const fmtT=t=>new Date(t).toLocaleString("tr-TR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  const loc=localBackups().map(b=>Object.assign({src:"Bu tarayıcı"},b));
+  let srv=[], srvErr=false; if(DBH){try{const q=await DBH.collection("backups").orderBy("t","desc").limit(40).get(); srv=q.docs.map(d=>Object.assign({src:"Ortak",id:d.id},d.data()));}catch(e){srvErr=true;}}
+  const list=[...srv,...loc].sort((a,b)=>b.t-a.t);
+  panel.innerHTML=`<div class="bk-head"><h2>Yedekler</h2><button id="bkClose">Kapat</button></div>
+   <p class="lede">Ortak veri her 10 dakikada bir, bir değişiklik bir üründeki dolu hücreleri azaltacaksa o değişiklikten hemen önce ve silme, içe aktarma, geri yükleme işlemlerinden önce otomatik yedeklenir. Şu anki veri: ${APP.order.length} ürün, ${filledAll(APP.products)} dolu hücre.</p>
+   ${srvErr?'<p class="inactive-note hint">Ortak yedekler şu an okunamadı; yalnızca bu tarayıcıdaki yedekler listeleniyor.</p>':""}<div class="row-actions" style="margin:0 0 12px"><button id="bkNow">Şimdi yedek al</button></div>
+   <div class="scroll"><table><thead><tr><th>Zaman</th><th>Kaynak</th><th>Kapsam</th><th>Açıklama</th><th class="num">Dolu hücre</th><th></th></tr></thead><tbody>
+   ${list.map((b,i)=>{let inf; try{inf=bkInfo(b);}catch(e){inf={what:"Okunamayan yedek",n:0,bad:true};} return `<tr><td>${fmtT(b.t)}</td><td>${b.src}</td><td>${esc(inf.what)}</td><td>${esc(b.label||"")}</td><td class="num">${inf.n||"–"}</td><td>${inf.bad?'<span class="hint">okunamadı</span>':b.kind?`<button data-r="${i}">Geri yükle</button>`:(b.tr&&b.us)?`<button data-r="${i}">Yeni ürün olarak geri yükle</button>`:'<span class="hint">–</span>'}</td></tr>`;}).join("")||'<tr><td colspan="6">Henüz yedek yok.</td></tr>'}</tbody></table></div>`;
+  $("bkClose").onclick=()=>{panel.hidden=true;};
+  $("bkNow").onclick=async()=>{await backupAll("Elle alınan yedek"); openBackups();};
+  panel.querySelectorAll("[data-r]").forEach(btn=>btn.onclick=()=>{const b=list[+btn.dataset.r], inf=bkInfo(b);
+    notice(`${fmtT(b.t)} tarihli yedek geri yüklenecek (${inf.what}). Mevcut veri önce yedeklenir${mode==="shared"?"; değişiklik ekipteki herkese yansır":""}.`,[
+      ["Geri yükle",async()=>{notice(""); await backupAll("Geri yüklemeden önceki veri");
+        if(!b.kind&&b.tr&&b.us){ const P=emptyProduct("Marxlow 300W Pro (eski yedek)"); ["tr","us"].forEach(mid=>{P.markets[mid].rows=(Array.isArray(b[mid].rows)?b[mid].rows:[]).map(r=>{const x=Object.assign({},r);delete x.wh;return x;}); const op=Object.assign({},b[mid].p); delete op.ourWh; Object.assign(P.markets[mid].p,op);}); normalize(P); APP.products[P.id]=P; APP.order.push(P.id); APP.ui.pid=P.id; APP.ui.tab="tr"; commitProduct(P.id); commitMeta(); renderView(); }
+        else restoreBackup(b); panel.hidden=true;},true],["Vazgeç",()=>notice("")]]);});
+}
+function restoreBackup(b){
+  if(b.kind==="product"){const P=normalize(fromServer(b.data.product)); APP.products[P.id]=P; if(!APP.order.includes(P.id)) APP.order.push(P.id); APP.ui.pid=P.id; commitProduct(P.id); commitMeta(); renderView(); return;}
+  if(b.kind==="all"){const old=Object.keys(APP.products); APP.products={}; Object.entries(b.data.products).forEach(([id,P])=>APP.products[id]=normalize(fromServer(P))); APP.order=(b.data.order||Object.keys(APP.products)).filter(id=>APP.products[id]);
+    old.forEach(id=>{if(!APP.products[id]) removeProductRemote(id);}); APP.ui.pid=APP.order[0]||"__all__"; APP.order.forEach(id=>commitProduct(id)); commitMeta(); renderView();}
+}
+$("backupBtn").addEventListener("click",openBackups);
+
+/* ---------- dışa / içe aktarma ---------- */
+async function saveFile(filename,data){
+  if(!window.claude){const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([data],{type:/\.csv$/.test(filename)?"text/csv;charset=utf-8":"application/json"})); a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500); return;}
+  let dl=null; try{dl=await window.claude.use("downloads");}catch(e){}
+  if(dl){try{await dl.save({filename,data});return;}catch(e){if(e&&e.code==="declined") return;}}
+  notice("Dosya indirme bu görünümde kullanılamıyor. İçeriği panoya kopyalayabilirsiniz.",[["Panoya kopyala",async()=>{try{await navigator.clipboard.writeText(data);notice("Panoya kopyalandı.",[["Kapat",()=>notice("")]]);}catch(e){notice("Kopyalanamadı.",[["Kapat",()=>notice("")]]);}},true],["Kapat",()=>notice("")]]);
+}
+const stamp=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");};
+function exportJson(pid){
+  if(pid){const P=APP.products[pid]; saveFile(`${P.id}-${stamp()}.json`,JSON.stringify({app:"marxlow-forecast",v:8,exported:new Date().toISOString(),product:P},null,2));}
+  else saveFile(`marxlow-ongoru-tum-urunler-${stamp()}.json`,JSON.stringify({app:"marxlow-forecast",v:8,exported:new Date().toISOString(),order:APP.order,products:APP.products},null,2));
+}
+$("exportJson").addEventListener("click",()=>exportJson());
+$("exportCsv").addEventListener("click",()=>{
+  const q=v=>{const s=String(v??"");return /[;"\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const head=["Ürün grubu","Pazar","Tablo","Dahil","Ürün","Kanal","Link","Fiyat","Puan","Yorum (toplam)","Son dönem yorum","Dönem (gün)","Soru-cevap","Favori","Sepette","Rozet adedi","Rozet süresi (gün)","Yayın","Ay","Editör çarpanı","Tahmini satış / ay","Kaynak","Güven","Trend","Şerh"];
+  const ct={strong:"Güçlü",ok:"Makul",clash:"Sinyaller çelişiyor",lo:"Düşük güven",estdate:"Tahmini tarih",na:"Veri yok"}, L=[head.join(";")];
+  APP.order.forEach(pid=>{const P=APP.products[pid]; P.mOrder.forEach(mid=>{const M=P.markets[mid], cal=calibrate(M); M.rows.forEach(r=>{const c=rowCalc(M,r,cal);
+    L.push([P.name,M.label,r.grp==="muadil"?"Muadil":"Hacim",r.inc?"Evet":"Hayır",r.name,r.ch,r.link,r.price,r.rating,r.rev,r.recentRev,r.recentDays,r.qa,r.fav,r.cart,r.badge,r.badgeDays,r.date,isFinite(c.months)?(c.est?"~"+c.months:c.months):"",r.mult,isFinite(c.units)?Math.round(c.units):"",c.src,ct[c.conf],c.trend,r.note].map(q).join(";"));});});});
+  saveFile(`marxlow-ongoru-${stamp()}.csv`,"\ufeff"+L.join("\r\n"));
+});
+$("importBtn").addEventListener("click",()=>$("importFile").click());
+$("importFile").addEventListener("change",e=>{
+  const file=e.target.files&&e.target.files[0]; e.target.value=""; if(!file) return;
+  const rd=new FileReader();
+  rd.onload=()=>{let d; try{d=JSON.parse(rd.result);}catch(err){notice("Dosya okunamadı: geçerli bir JSON değil.",[["Kapat",()=>notice("")]]);return;}
+    const addAsNew=P=>{P=normalize(P); if(APP.products[P.id]) P.id=slug(P.name); APP.products[P.id]=P; APP.order.push(P.id); APP.ui.pid=P.id; APP.ui.tab=P.mOrder[0]; commitProduct(P.id); commitMeta(); renderView();};
+    if(d&&d.products&&d.order){
+      notice(`“${file.name}” içindeki ${d.order.length} ürün mevcut tüm ürünlerin yerine geçecek. Önce yedek alınır.`,[["Tümünü değiştir",async()=>{notice(""); await backupAll("İçe aktarmadan önceki veri"); restoreBackup({kind:"all",data:d});},true],["Vazgeç",()=>notice("")]]);
+    } else if(d&&d.product){
+      const P=clone(d.product), exists=APP.products[P.id];
+      notice(`“${P.name}” ürünü içe aktarılacak.${exists?" Aynı ürün zaten var.":""}`,[...(exists?[["Mevcut ürünle değiştir",async()=>{notice(""); await backupAll("İçe aktarmadan önceki veri"); restoreBackup({kind:"product",data:{pid:P.id,product:P}});},true]]:[]),["Yeni ürün olarak ekle",()=>{notice(""); if(exists){P.name+=" (içe aktarılan)";} addAsNew(P);},!exists],["Vazgeç",()=>notice("")]]);
+    } else if(d&&d.tr&&d.us&&Array.isArray(d.tr.rows)){
+      const mk=()=>{const P=emptyProduct("İçe aktarılan ürün"); ["tr","us"].forEach(mid=>{P.markets[mid].rows=d[mid].rows.map(r=>{const x=Object.assign({},r);delete x.wh;return x;}); const op=Object.assign({},d[mid].p); delete op.ourWh; Object.assign(P.markets[mid].p,op);}); return P;};
+      const cur=APP.ui.pid!=="__all__"?curP():null;
+      notice("Bu dosya eski tek ürünlü sürümden. Nasıl içe aktarılsın?",[...(cur?[[`“${cur.name}” ürününün pazar verileriyle değiştir`,async()=>{notice(""); await backupAll("İçe aktarmadan önceki veri"); const N=mk(); cur.markets.tr.rows=N.markets.tr.rows; cur.markets.us.rows=N.markets.us.rows; Object.assign(cur.markets.tr.p,N.markets.tr.p); Object.assign(cur.markets.us.p,N.markets.us.p); normalize(cur); commitProduct(cur.id); renderView();},true]]:[]),["Yeni ürün olarak ekle",()=>{notice(""); addAsNew(mk());}],["Vazgeç",()=>notice("")]]);
+    } else notice("Bu dosya bu araca ait bir dışa aktarım gibi görünmüyor.",[["Kapat",()=>notice("")]]);
+  };
+  rd.readAsText(file);
+});
+
+/* ---------- başlat ---------- */
+sortable($("prodbar"),"[data-sid]",{axis:"x",onDone:ids=>{APP.order=ids.filter(id=>APP.products[id]); commitMeta(); renderNav();}});
+sortable($("subbar"),"[data-sid]",{axis:"x",onDone:ids=>{const P=curP(); if(!P) return; P.mOrder=ids.filter(m=>P.markets[m]); commitProduct(P.id); renderNav();}});
+readHash(); renderView();
+if(newDataPending) notice(`Bu sayfanın yeni bir sürümü yayınlandı (${DATA_VERSION}). Yeni veriyi yüklemek ister misiniz? Kendi değişiklikleriniz önce “Yedekler”e kaydedilir.`,[
+  ["Yeni veriyi yükle",()=>{localBackup("Yeni veri sürümü yüklenmeden önceki çalışmam","all",{order:APP.order.slice(),products:APP.products}); const D=defaultApp(); APP.order=D.order; APP.products=D.products; APP.ui=D.ui; APP.dataVersion=DATA_VERSION; saveLocal(); notice(""); renderView();},true],
+  ["Kendi verimle devam et",()=>{APP.dataVersion=DATA_VERSION; saveLocal(); notice("");}]]);
+window.addEventListener("hashchange",()=>{readHash(); renderView();});
+initSync();
+})();
+
+</script>
+</body>
+</html>
